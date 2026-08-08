@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 from io import StringIO
 from types import FrameType
 
@@ -129,6 +130,25 @@ def test_album_position_default_and_after_media() -> None:
     )
     assert rebuilt.position == PositionType.LAST_IN_ALBUM
     AlbumPosition.from_dict({"position": PositionType.FIRST_IN_ALBUM})
+
+
+def test_album_position_to_dict_is_json_serializable() -> None:
+    last = AlbumPosition(PositionType.LAST_IN_ALBUM)
+    dumped = last.to_dict()
+    assert dumped["position"] == "LAST_IN_ALBUM"
+    assert isinstance(dumped["position"], str)
+    assert dumped["relativeMediaItemId"] is None
+    assert dumped["relativeEnrichmentItemId"] is None
+
+    after = AlbumPosition(
+        PositionType.AFTER_MEDIA_ITEM, relativeMediaItemId="mid-1"
+    )
+    payload = after.to_dict()
+    assert payload["position"] == "AFTER_MEDIA_ITEM"
+    assert payload["relativeMediaItemId"] == "mid-1"
+    roundtrip = json.loads(json.dumps(payload))
+    assert roundtrip["position"] == "AFTER_MEDIA_ITEM"
+    assert roundtrip["relativeMediaItemId"] == "mid-1"
 
 
 def test_album_position_after_enrichment_raises_due_to_existing_bug() -> None:

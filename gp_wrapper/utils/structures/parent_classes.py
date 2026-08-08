@@ -2,6 +2,7 @@ import inspect
 from typing import Optional, IO, cast
 from types import FrameType
 from abc import ABC
+from enum import Enum
 from ..helpers import memo
 
 
@@ -273,6 +274,8 @@ class Dictable(ABC):
                 k = k[len(potential_prefix):]
             if isinstance(v, Dictable):
                 res[k] = v.to_dict()
+            elif isinstance(v, Enum):
+                res[k] = v.value
             else:
                 res[k] = v
         return res

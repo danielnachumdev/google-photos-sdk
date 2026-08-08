@@ -263,6 +263,8 @@ def test_batch_create_validation_and_success(gp) -> None:
     assert len(results) == 2
     assert results[0].mediaItem is not None
     assert results[1].status is not None
+    body = gp.session.post.call_args.kwargs["json"]
+    assert body["albumPosition"]["position"] == "LAST_IN_ALBUM"
 
     gp.session.post.return_value = make_response({"newMediaItemResults": []})
     assert CoreMediaItem.batchCreate(gp, []) == []
