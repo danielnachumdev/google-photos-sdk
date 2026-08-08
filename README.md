@@ -25,5 +25,6 @@ A-lot of well defined API inspired Classes and Enums to simplify the usage.
 3. Extract relevant data for [`client_secrets.json`](./READMES/client_secrets_example.json)
 2. Install:
     - From PyPI: `pip install gp_wrapper` or `uv add gp_wrapper`
-    - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, …)
+    - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, quickpub, …)
+    - Publish a new version: bump `VERSION` in `publish.py`, then `uv run python publish.py` (uses [quickpub](https://pypi.org/project/quickpub/); needs `.pypirc`)
 3. See example [here](./READMES/example.md)

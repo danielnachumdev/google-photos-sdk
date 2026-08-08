@@ -1,155 +1,112 @@
-import re
-from danielutils import cmrt, cm, read_file, get_files, directory_exists, create_directory  # type:ignore
-VERSION_PATTERN = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-TOML = "./pyproject.toml"
-README = "./README.md"
-DIST = "./dist"
-REPORTS = "./reports"
+"""Publish gp_wrapper via quickpub (QA, build, PyPI + git).
 
-PACKAGE = "gp_wrapper"
+Bump `version` before a real release. Set `demo=True` to run checks without
+build/upload. Requires `.pypirc`. License file on disk is `LISENCE`.
 
+quickpub regenerates `setup.py`, `pyproject.toml`, and `MANIFEST.in` on a
+successful publish — re-apply uv/dev-tool sections afterwards if needed.
+Build itself is PEP 517 via `uv build` (pyproject.toml), not `setup.py sdist`.
+"""
 
-def get_latest(ver: str = '0.0.0') -> str:
-    """returns the latest version currently in the DIST fuller
+import logging
+import shutil
+import subprocess
+from pathlib import Path
 
-    Args:
-        version (str, optional): the version to compare against. Defaults to '0.0.0'.
+from tqdm import tqdm
 
-    Returns:
-        str: the biggest version number
-    """
-    if not directory_exists(DIST):
-        return ver
-    DIST_PATTERN = PACKAGE+r"-(\d+)\.(\d+)\.(\d+)\.tar\.gz"
-    best = ver
-    for filename in get_files(DIST):
-        a1, b1, c1 = best.split(".")
-        match = re.match(DIST_PATTERN, filename)
-        if match:
-            a2, b2, c2 = match.groups()
-            other_version = f"{a2}.{b2}.{c2}"
-            if int(a2) > int(a1):
-                best = other_version
-            elif int(a2) == int(a1):
-                if int(b2) > int(b1):
-                    best = other_version
-                elif int(b2) == int(b1):
-                    if int(c2) > int(c1):
-                        best = other_version
-    return best
+from quickpub import (
+    BuildSchema,
+    DefaultPythonProvider,
+    GithubUploadTarget,
+    LicenseEnforcer,
+    LocalVersionEnforcer,
+    MypyRunner,
+    PylintRunner,
+    PypiRemoteVersionEnforcer,
+    PypircEnforcer,
+    PypircUploadTarget,
+    PytestRunner,
+    ReadmeEnforcer,
+    publish,
+)
+
+logger = logging.getLogger(__name__)
+
+VERSION = "0.9.8"
 
 
-def main(ver: str):
-    """main function, create a new release and update the files and call terminal to upload the release
+class UvBuildSchema(BuildSchema):
+    """Build sdist/wheel with `uv build` from pyproject.toml (PEP 517)."""
 
-    Args:
-        version (str): the new version
-    """
+    def __init__(self, pyproject_path: str = "./pyproject.toml") -> None:
+        super().__init__(verbose=True)
+        self._pyproject_path = pyproject_path
 
-    def update_version(ver: str):
-        """updates the new version number in the relevant files
+    def build(self, verbose: bool = False, *args, **kwargs) -> None:
+        pyproject = Path(self._pyproject_path)
+        if not pyproject.is_file():
+            raise self.EXCEPTION_TYPE(f"Could not find {self._pyproject_path}")
 
-        Args:
-            version (_type_): _description_
-        """
-        def update_readme() -> None:
-            lines = read_file(README)
-            with open(README, "w", encoding="utf8") as f:
-                for line in lines:
-                    if line.startswith(f"# {PACKAGE} v="):
-                        f.write(f"# {PACKAGE} v={ver}\n")
-                    else:
-                        f.write(line)
+        uv = shutil.which("uv")
+        if uv is None:
+            raise self.EXCEPTION_TYPE("`uv` is not on PATH; install uv to build")
 
-        def update_toml() -> None:
-            lines = read_file(TOML)
-            with open(TOML, "w", encoding="utf8") as f:
-                for line in lines:
-                    if line.startswith("version = "):
-                        f.write(f"version = \"{ver}\"\n")
-                    else:
-                        f.write(line)
-        update_readme()
-        update_toml()
+        if verbose or self.verbose:
+            logger.info("Building with uv from %s", pyproject.resolve())
 
-    latest = get_latest(ver)
-    if latest != ver:
-        print(f"{ver} is not the latest version, found {latest}, cancelling...")
-        exit()
-    print("updating version in files...")
-    update_version(ver)
-    print("Creating new distribution...")
-    ret, stdout, stderr = cm("uv", "build")
-    if ret != 0:
-        print(stderr.decode())
-        exit()
-    print("Created dist successfully")
-    # # twine upload dist/...
-    ret, stdout, stderr = cm("wt.exe", "python", "-m",
-                             "twine", "upload", "--config-file", "./.pypirc", f"./dist/{PACKAGE}-{ver}.tar.gz")
-    if ret == 0:
-        git(ver)
-        print("DONE")
-    else:
-        print("twine failed")
+        proc = subprocess.run(
+            [uv, "build"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            detail = proc.stderr.strip() or proc.stdout.strip() or "uv build failed"
+            logger.error("uv build failed: %s", detail)
+            raise self.EXCEPTION_TYPE(detail)
 
 
-def pytest() -> bool:
-    """run pytest via uv (coverage gate is in pyproject.toml)."""
-    print("running pytest")
-    code, stdout, stderr = cm("uv", "run", "pytest")
-    if stdout:
-        print(stdout.decode(), end="")
-    if code != 0:
-        if stderr:
-            print(stderr.decode(), end="")
-        return False
-    return True
-
-
-def pylint() -> None:
-    """run pylint (config from pyproject.toml)
-    """
-    print("running pylint...")
-    for i, line in cmrt("pylint",
-                        f"./{PACKAGE}", ">", f"{REPORTS}/pylint.txt"):
-        print(line.decode(), end="")
-
-
-def git(ver: str) -> None:
-    """will add recent changes and automatically commit to git after the publication
-    """
-    print("updating git")
-    cm("git add .")
-    print("committing")
-    cm(f"git commit -m \"updated to version {ver}\"")
-    print("pushing")
-    cm("git push")
-
-
-def mypy() -> None:
-    """run mypy (config from pyproject.toml)
-    """
-    print("running mypy")
-    with open(f"{REPORTS}/mypy.txt", "w", encoding="utf8") as f:
-        for i, line in cmrt("mypy", f"./{PACKAGE}"):
-            f.write(line.decode())
-            print(line.decode(), end="")
+def main() -> None:
+    publish(
+        name="gp_wrapper",
+        version=VERSION,
+        author="danielnachumdev",
+        author_email="danielnachumdev@gmail.com",
+        description="A Google Photos API wrapper library",
+        homepage="https://github.com/danielnachumdev/gp_wrapper",
+        explicit_src_folder_path="./gp_wrapper",
+        readme_file_path="./README.md",
+        license_file_path="./LISENCE",
+        min_python="3.8.0",
+        keywords=["functions", "methods", "classes", "API"],
+        dependencies=[
+            "google-api-python-client",
+            "google-auth-httplib2",
+            "google-auth-oauthlib",
+            "moviepy>=1.0.3,<2",
+            "requests",
+            "tqdm",
+        ],
+        enforcers=[
+            PypircEnforcer(),
+            ReadmeEnforcer(),
+            LicenseEnforcer("./LISENCE"),
+            LocalVersionEnforcer(),
+            PypiRemoteVersionEnforcer(),
+        ],
+        global_quality_assurance_runners=[
+            MypyRunner(bound="<=20", configuration_path="./pyproject.toml"),
+            PylintRunner(bound=">=0.8", configuration_path="./pyproject.toml"),
+            PytestRunner(bound=">=0.95"),
+        ],
+        python_interpreter_provider=DefaultPythonProvider(),
+        build_schemas=[UvBuildSchema()],
+        upload_targets=[PypircUploadTarget(), GithubUploadTarget()],
+        pbar=tqdm(desc="QA task", leave=False),  # type: ignore[arg-type]
+        demo=False,
+    )
 
 
 if __name__ == "__main__":
-    if not directory_exists(REPORTS):
-        create_directory(REPORTS)
-    if not pytest():
-        print("Tests failed, cancelling publish")
-        exit(1)
-    print("Passed all tests!")
-    pylint()
-    mypy()
-    version = input(
-        f"Please supply a new version number (LATEST = {get_latest()}): ")
-    if re.match(VERSION_PATTERN, version):
-        main(version)
-    else:
-        print("invalid version. example 1.0.5.20")
-__all__: list = []
+    main()
