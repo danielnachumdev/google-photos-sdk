@@ -1464,7 +1464,7 @@ wheels = [
 
 [[package]]
 name = "gp-wrapper"
-version = "0.9.8"
+version = "0.9.9"
 source = { editable = "." }
 dependencies = [
     { name = "google-api-python-client" },
@@ -1531,7 +1531,7 @@ dev = [
     { name = "pylint" },
     { name = "pytest", specifier = ">=7.0" },
     { name = "pytest-cov", specifier = ">=4.0" },
-    { name = "quickpub", specifier = ">=4.1.1" },
+    { name = "quickpub", specifier = ">=4.1.2" },
     { name = "types-requests" },
     { name = "types-tqdm" },
 ]
@@ -4147,7 +4147,7 @@ wheels = [
 
 [[package]]
 name = "quickpub"
-version = "4.1.1"
+version = "4.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "danielutils" },
@@ -4159,7 +4159,7 @@ dependencies = [
     { name = "twine", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "twine", version = "7.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/04/5c731edace1155539a8624526aeec81a621b7d224c3c2a6d5e188d7594ca/quickpub-4.1.1.tar.gz", hash = "sha256:29556cf25749adec8826393774beff4a26b8bb1fe20493b0290ff210de4a2d37", size = 30756, upload-time = "2026-06-19T20:53:15.608Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/68/06/09c5fc680d410db3ba84716eb55a1406dc6a7b5d8862c591d556bd66afe3/quickpub-4.1.2.tar.gz", hash = "sha256:cf929b74a4baa1b8f682ad3b1d3e6e35aa0a511609fca0c96aee59d751883b84", size = 33783, upload-time = "2026-08-08T14:11:16.951Z" }
 
 [[package]]
 name = "readme-renderer"

@@ -79,6 +79,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
             "X-Goog-Upload-Protocol": "raw"
         }
         new_path = media  # assign default value
+        copied_times: Optional[FileTime] = None
         if file_extension in CoreMediaItem.SUPPORTED_VIDEO_FILE_TYPES:
             if file_extension != '.mp4':
                 p = pathlib.Path(media)
@@ -91,21 +92,25 @@ class CoreMediaItem(Printable, OnlyPrivate):
                         )
                         clip = moviepy.VideoFileClip(media)
                     clip.write_videofile(new_path, verbose=False, logger=None)
-                    file_times = FileTimeService()
-                    ft = file_times.get(media)
-                    file_times.set(new_path, FileTime(
-                        creation=ft.creation, access=ft.creation, modification=ft.creation))
+                    copied_times = FileTimeService().get(media)
             header_type = HeaderType.OCTET
             additional_headers["X-Goog-Upload-Content-Type"] = MimeType.MP4.value
         with open(new_path, 'rb') as data_stream:
-            response = gp.request(
-                RequestType.POST,
-                UPLOAD_MEDIA_ITEM_ENDPOINT,
-                header_type=header_type,
-                pbar=pbar,
-                data=data_stream.read(),
-                additional_headers=additional_headers
+            payload = data_stream.read()
+        # After the read: Windows updates atime on open. Apply source atime/mtime last.
+        if copied_times is not None:
+            FileTimeService().set(
+                new_path,
+                FileTime(access=copied_times.access, modification=copied_times.modification),
             )
+        response = gp.request(
+            RequestType.POST,
+            UPLOAD_MEDIA_ITEM_ENDPOINT,
+            header_type=header_type,
+            pbar=pbar,
+            data=payload,
+            additional_headers=additional_headers
+        )
         response.raise_for_status()
         token = response.content.decode('utf-8')
         return token

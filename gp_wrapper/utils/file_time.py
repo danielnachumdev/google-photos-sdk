@@ -3,8 +3,8 @@
 Creation/birth time is *read* when the platform exposes it (``st_birthtime``,
 or ``st_ctime`` on Windows). Setting a distinct creation time is not portable;
 ``FileTimeService.set`` applies access and modification with ``os.utime``. If
-only ``creation`` is provided, it is used for both atime and mtime (matches
-video transcode timestamp copy in ``CoreMediaItem.upload_media``).
+only ``creation`` is provided, it is used as a fallback for both atime and mtime.
+``CoreMediaItem.upload_media`` copies source access/modification onto transcoded videos.
 """
 from __future__ import annotations
 

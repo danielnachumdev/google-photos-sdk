@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gp_wrapper"
-version = "0.9.8"
+version = "0.9.9"
 description = "A Google Photos API wrapper library"
 readme = "README.md"
 license = { file = "LISENCE" }
@@ -50,7 +50,7 @@ dev = [
     "pylint",
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "quickpub>=4.1.1",
+    "quickpub>=4.1.2",
     "types-requests",
     "types-tqdm",
 ]
