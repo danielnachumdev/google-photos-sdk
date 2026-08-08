@@ -7,10 +7,12 @@ Requires `.pypirc`. License file on disk is `LISENCE`.
 from tqdm import tqdm
 
 from quickpub import (
+    DefaultPythonProvider,
     GithubUploadTarget,
     LicenseEnforcer,
     LocalVersionEnforcer,
     MypyRunner,
+    PipPackageManager,
     PylintRunner,
     PypiRemoteVersionEnforcer,
     PypircEnforcer,
@@ -36,14 +38,6 @@ def main() -> None:
         license_file_path="./LISENCE",
         min_python="3.8.0",
         keywords=["functions", "methods", "classes", "API"],
-        dependencies=[
-            "google-api-python-client",
-            "google-auth-httplib2",
-            "google-auth-oauthlib",
-            "moviepy>=1.0.3,<2",
-            "requests",
-            "tqdm",
-        ],
         enforcers=[
             PypircEnforcer(),
             ReadmeEnforcer(),
@@ -56,6 +50,8 @@ def main() -> None:
             PylintRunner(bound=">=0.8", configuration_path="./pyproject.toml"),
             PytestRunner(bound=">=0.95"),
         ],
+        python_interpreter_provider=DefaultPythonProvider(),
+        package_manager=PipPackageManager(),
         build_schemas=[UvBuildSchema()],
         generate_project_files=False,
         upload_targets=[PypircUploadTarget(), GithubUploadTarget()],
