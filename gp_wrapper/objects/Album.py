@@ -3,8 +3,8 @@ from typing import Optional, Generator, Iterable
 from requests.models import Response  # type:ignore
 from .core import GooglePhotos, CoreAlbum, CoreEnrichmentItem
 from .MediaItem import MediaItem
-from ..utils import PositionType, EnrichmentType, RequestType, AlbumMaskType,\
-    NewMediaItem, SimpleMediaItem, MediaItemResult
+from ..utils import PositionType, EnrichmentType, RequestType, AlbumMaskType, \
+    NewMediaItem, SimpleMediaItem, MediaItemResult, batchify
 from ..utils import Path, NextPageToken, get_python_version
 if get_python_version() < (3, 9):
     from typing import List as t_list, Tuple as t_tuple
@@ -165,7 +165,6 @@ class Album(CoreAlbum):
                 raise ValueError(
                     f"the description parts should be less than {HARD_LIMIT} characters"
                     "long because of a hard limit google employs")
-
         chunks: t_list[str] = []
         tmp_chunk = ""
         for text in parts:

@@ -1,12 +1,10 @@
 import re
 from danielutils import cmrt, cm, read_file, get_files, directory_exists, create_directory  # type:ignore
 VERSION_PATTERN = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-SETUP = "./setup.py"
 TOML = "./pyproject.toml"
 README = "./README.md"
 DIST = "./dist"
 REPORTS = "./reports"
-REQS = "./requirements/publish.txt"
 
 PACKAGE = "gp_wrapper"
 
@@ -54,15 +52,6 @@ def main(ver: str):
         Args:
             version (_type_): _description_
         """
-        def update_setup() -> None:
-            lines = read_file(SETUP)
-            with open(SETUP, "w", encoding="utf8") as f:
-                for line in lines:
-                    if line.startswith("VERSION"):
-                        f.write(f"VERSION = \"{ver}\"\n")
-                    else:
-                        f.write(line)
-
         def update_readme() -> None:
             lines = read_file(README)
             with open(README, "w", encoding="utf8") as f:
@@ -82,17 +71,6 @@ def main(ver: str):
                         f.write(line)
         update_readme()
         update_toml()
-        update_setup()
-
-    def update_requirements() -> None:
-        lines = read_file(SETUP)
-        reqs = [l.strip() for l in read_file(REQS)]
-        with open(SETUP, "w", encoding="utf8") as f:
-            for line in lines:
-                if line.strip().startswith("install_requires"):
-                    f.write(f"\tinstall_requires={reqs},  #noqa\n")
-                else:
-                    f.write(line)
 
     latest = get_latest(ver)
     if latest != ver:
@@ -100,9 +78,8 @@ def main(ver: str):
         exit()
     print("updating version in files...")
     update_version(ver)
-    update_requirements()
     print("Creating new distribution...")
-    ret, stdout, stderr = cm("python", "setup.py", "sdist")
+    ret, stdout, stderr = cm("uv", "build")
     if ret != 0:
         print(stderr.decode())
         exit()
@@ -111,53 +88,31 @@ def main(ver: str):
     ret, stdout, stderr = cm("wt.exe", "python", "-m",
                              "twine", "upload", "--config-file", "./.pypirc", f"./dist/{PACKAGE}-{ver}.tar.gz")
     if ret == 0:
-        git(version)
+        git(ver)
         print("DONE")
     else:
         print("twine failed")
 
 
 def pytest() -> bool:
-    """run pytest
-
-    Returns:
-        bool: success status
-    """
-    def has_fails(pytest_out: str) -> bool:
-        RE = r'=+ (?:(?P<FAIL>\d+ failed), )?(?P<PASS>\d+ passed) in [\d\.]+s =+'
-        if not re.match(RE, pytest_out):
-            print("Failed to match pytest output")
-            return True
-
-        res = re.findall(RE, pytest_out)[0]
-        failed = int(res[0].split()[0]) if res[0] != "" else 0
-        return failed > 0
-
-    COMMAND = "pytest"
-    if input("Do you want to generate a report as well? <y|n>: ") == "y":
-        COMMAND += " --html=pytest_report.html"
-    COMMAND += f" > {REPORTS}/pytest.txt"
+    """run pytest via uv (coverage gate is in pyproject.toml)."""
     print("running pytest")
-    code, stdout, stderr = cm(COMMAND)
+    code, stdout, stderr = cm("uv", "run", "pytest")
+    if stdout:
+        print(stdout.decode(), end="")
     if code != 0:
-        err = stderr.decode()
-        if err != "":
-            print(err)
-            return False
-    with open(f"{REPORTS}/pytest.txt", "r", encoding="utf8") as f:
-        summary = f.readlines()[-1]
-    if has_fails(summary):
-        print(summary)
+        if stderr:
+            print(stderr.decode(), end="")
         return False
     return True
 
 
-def pylint(config_file_path: str = "./.pylintrc") -> None:
-    """run pylint
+def pylint() -> None:
+    """run pylint (config from pyproject.toml)
     """
     print("running pylint...")
-    for i, line in cmrt("pylint", "--rcfile", config_file_path,
-                        "./gp__wrapper", ">", f"{REPORTS}/pylint.txt"):
+    for i, line in cmrt("pylint",
+                        f"./{PACKAGE}", ">", f"{REPORTS}/pylint.txt"):
         print(line.decode(), end="")
 
 
@@ -172,13 +127,12 @@ def git(ver: str) -> None:
     cm("git push")
 
 
-def mypy(config_file_path: str = "mypy.ini") -> None:
-    """run mypy
+def mypy() -> None:
+    """run mypy (config from pyproject.toml)
     """
     print("running mypy")
     with open(f"{REPORTS}/mypy.txt", "w", encoding="utf8") as f:
-        for i, line in cmrt("mypy", "--config-file", config_file_path,
-                            f"./{PACKAGE}"):
+        for i, line in cmrt("mypy", f"./{PACKAGE}"):
             f.write(line.decode())
             print(line.decode(), end="")
 
@@ -186,16 +140,16 @@ def mypy(config_file_path: str = "mypy.ini") -> None:
 if __name__ == "__main__":
     if not directory_exists(REPORTS):
         create_directory(REPORTS)
-    # has_passed_tests = pytest()
-    if True:
-        print("Passed all tests!")
-        pylint()
-        mypy()
-        version = input(
-            f"Please supply a new version number (LATEST = {get_latest()}): ")
-        if re.match(VERSION_PATTERN, version):
-            main(version)
-
-        else:
-            print("invalid version. example 1.0.5.20")
+    if not pytest():
+        print("Tests failed, cancelling publish")
+        exit(1)
+    print("Passed all tests!")
+    pylint()
+    mypy()
+    version = input(
+        f"Please supply a new version number (LATEST = {get_latest()}): ")
+    if re.match(VERSION_PATTERN, version):
+        main(version)
+    else:
+        print("invalid version. example 1.0.5.20")
 __all__: list = []

@@ -72,8 +72,8 @@ class ProgressBarInjector:
             unit = "KB"
 
         update_amount = total/num_of_chunks
-        self.pbar.unit = unit
-        self.pbar.total = total
+        self.pbar.unit = str(unit)
+        self.pbar.total = str(total)
         self.pbar.bar_format = DEFAULT_BAR_FORMAT
         for chunk in chunks:
             yield chunk
