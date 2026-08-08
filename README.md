@@ -23,5 +23,7 @@ A-lot of well defined API inspired Classes and Enums to simplify the usage.
         4. https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata
     3. Add a google account as a Test User which will be able to use you project as an 'end user'
 3. Extract relevant data for [`client_secrets.json`](./READMES/client_secrets_example.json)
-2. `pip install gp_wrapper`
+2. Install:
+    - From PyPI: `pip install gp_wrapper` or `uv add gp_wrapper`
+    - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, …)
 3. See example [here](./READMES/example.md)

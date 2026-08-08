@@ -91,14 +91,16 @@ def slowdown(interval: ForwardRef("Seconds")):  # type:ignore
         def wrapper(*args, **kwargs) -> T:
             nonlocal index, prev_start
             start = time.time()
-            time_passed: Milliseconds = (start-prev_start)/1000
-            time_to_wait: Seconds = interval-time_passed
+            time_passed: Milliseconds = (start - prev_start) / 1000
+            time_to_wait: Seconds = interval - time_passed
             if time_to_wait > 0:
                 time.sleep(time_to_wait)
             res = func(*args, **kwargs)
             prev_start = start
             return res
+
         return wrapper
+
     return deco
 
 
@@ -117,10 +119,25 @@ def memo(func):
     return wrapper
 
 
+def batchify(objects: Iterable[T], batch_max_size: int) -> t_list[t_list[T]]:
+    """split an iterable of objects into natches of these objects"""
+    batches = []
+    batch = []
+    for obj in objects:
+        batch.append(obj)
+        if len(batch) == batch_max_size:
+            batches.append(batch)
+            batch = []
+    if batch:
+        batches.append(batch)
+    return batches
+
+
 __all__ = [
     "split_iterable",
     "json_default",
     "slowdown",
     "get_python_version",
-    "memo"
+    "memo",
+    "batchify"
 ]
