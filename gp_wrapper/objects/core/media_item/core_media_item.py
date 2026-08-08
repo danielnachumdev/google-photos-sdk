@@ -90,7 +90,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
                             f"Video is not MP4. Creating {new_path}."
                             "\nThis may take a while depending on the length of the video"
                         )
-                        clip = moviepy.VideoFileClip(media)
+                    clip = moviepy.VideoFileClip(media)
                     clip.write_videofile(new_path, verbose=False, logger=None)
                     copied_times = FileTimeService().get(media)
             header_type = HeaderType.OCTET

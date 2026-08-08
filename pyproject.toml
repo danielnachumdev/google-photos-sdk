@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gp_wrapper"
-version = "0.9.9"
+version = "0.9.10"
 description = "A Google Photos API wrapper library"
 readme = "README.md"
 license = { file = "LISENCE" }
