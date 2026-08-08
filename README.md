@@ -26,5 +26,5 @@ A-lot of well defined API inspired Classes and Enums to simplify the usage.
 2. Install:
     - From PyPI: `pip install gp_wrapper` or `uv add gp_wrapper`
     - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, quickpub, …)
-    - Publish a new version: bump `VERSION` in `publish.py`, then `uv run python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.2+; needs `.pypirc`)
+    - Publish a new version: bump `VERSION` in `publish.py`, then `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+; needs `.pypirc`)
 3. See example [here](./READMES/example.md)
