@@ -26,7 +26,7 @@
 - **Python** `>=3.8.0` (keep unless uv/tooling forces a bump)
 - **Toolchain:** [uv](https://docs.astral.sh/uv/) + `pyproject.toml` / `uv.lock`
 - **Runtime / publish:** `[project].dependencies` — `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`, `requests`, `tqdm`, `moviepy>=1.0.3,<2`
-- **Dev:** `[dependency-groups].dev` — mypy, pylint, pytest, pytest-cov, `quickpub>=4.1.1`, `types-requests`, `types-tqdm` (no duplicated runtime deps)
+- **Dev:** `[dependency-groups].dev` — mypy, pylint, pytest, pytest-cov, `quickpub>=4.1.2`, `types-requests`, `types-tqdm` (no duplicated runtime deps)
 - **Lock constraint:** `tool.uv.constraint-dependencies` also pins `moviepy>=1.0.3,<2` (`moviepy.editor` was removed in moviepy 2.x). Do not rewrite the moviepy API here.
 - **Config:** `[tool.mypy]`, `[tool.pylint.*]`, `[tool.pytest.ini_options]`, `[tool.coverage.*]` all live in `pyproject.toml`
 
@@ -47,9 +47,9 @@ uv sync --group dev     # also mypy, pylint, twine, pytest, typing stubs
 - Import: `uv run python -c "import gp_wrapper"`
 - Tests: `uv run pytest` (after `uv sync --group dev`)
 - Typecheck / lint: `uv run mypy` / `uv run pylint gp_wrapper` (config from pyproject)
-- Publish: `uv run python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.1+: enforcers, mypy/pylint/pytest, **`uv build`** from `pyproject.toml`, PyPI + git). Bump `VERSION` in `publish.py` first. Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`. quickpub still rewrites `setup.py` / `pyproject.toml` / `MANIFEST.in` before build; `SetuptoolsBuildSchema` is not used (`python setup.py sdist` is deprecated).
+- Publish: `uv run python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.2+: `UvBuildSchema`, `generate_project_files=False` so existing `pyproject.toml` is kept). Bump `VERSION` in `publish.py` first. Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`.
 
-Known bug: importing on Linux can crash in `win32_ctime` (`NameError`). Do not fix that refactor unless asked. Windows import is the supported path.
+File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created). `CoreMediaItem.upload_media` copies those onto transcoded non-mp4 videos after reading bytes (so Windows atime is not clobbered by the upload open).
 
 ## Tests
 

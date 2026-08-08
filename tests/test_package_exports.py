@@ -5,6 +5,7 @@ import gp_wrapper
 
 
 def test_top_level_reexports() -> None:
+    assert gp_wrapper.__version__ == "0.9.9"
     assert gp_wrapper.GooglePhotos is not None
     assert gp_wrapper.Album is not None
     assert gp_wrapper.MediaItem is not None
@@ -42,6 +43,5 @@ def test_utils_package_reexports() -> None:
     assert utils.batchify
     assert utils.ProgressBar
     assert utils.ProgressBarInjector
-    assert utils.set_file_time
-    assert utils.get_file_time
     assert utils.FileTime
+    assert utils.FileTimeService

@@ -1,7 +1,9 @@
 """Tests for CoreMediaItem and MediaItem."""
 from __future__ import annotations
 
+import os
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -30,7 +32,7 @@ from gp_wrapper.utils.structures.data_types import (
     NewMediaItem,
     SimpleMediaItem,
 )
-from gp_wrapper.utils.win32_ctime import FileTime
+from gp_wrapper.utils.file_time import FileTime
 from gp_wrapper.utils.structures.enums import MediaItemMaskTypes, PositionType
 
 from .conftest import (
@@ -128,14 +130,19 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
         "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
-    now = datetime(2020, 1, 2, 3, 4, 5)
+    access = datetime(2015, 6, 15, 10, 0, 0)
+    modification = datetime(2015, 6, 15, 18, 30, 0)
+    creation = datetime(2026, 1, 1, 12, 0, 0)
+    captured: dict = {}
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.get_file_time",
-        lambda path: FileTime(creation=now, access=now, modification=now),
+        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.get",
+        lambda self, path, follow_symlinks=True: FileTime(
+            creation=creation, access=access, modification=modification
+        ),
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.set_file_time",
-        lambda path, ft: None,
+        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.set",
+        lambda self, path, ft, follow_symlinks=True: captured.update(path=path, ft=ft),
     )
     gp.session.post.return_value = make_response(content=b"tok-mov")
     bar = DummyProgressBar(total=1)
@@ -144,6 +151,37 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     assert dest.exists()
     assert bar.writes  # conversion message
     mock_clip.write_videofile.assert_called()
+    assert captured["path"] == str(dest)
+    assert captured["ft"].access == access
+    assert captured["ft"].modification == modification
+    assert captured["ft"].creation is None
+
+
+def test_upload_media_mov_copies_atime_mtime_to_converted_file(
+    gp, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    src = tmp_path / "clip.mov"
+    dest = tmp_path / "clip.mp4"
+    src.write_bytes(b"mov-bytes")
+    dated = datetime(2015, 6, 15, 18, 30, 0)
+    os.utime(src, (dated.timestamp(), dated.timestamp()))
+
+    mock_clip = MagicMock()
+
+    def fake_write(path, **kwargs):
+        Path(path).write_bytes(b"converted-mp4")
+
+    mock_clip.write_videofile.side_effect = fake_write
+    monkeypatch.setattr(
+        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        lambda path: mock_clip,
+    )
+    gp.session.post.return_value = make_response(content=b"tok-dated")
+    token = CoreMediaItem.upload_media(gp, str(src), pbar=DummyProgressBar(total=1))
+    assert token == "tok-dated"
+    st = os.stat(dest)
+    assert abs(st.st_atime - dated.timestamp()) <= 2
+    assert abs(st.st_mtime - dated.timestamp()) <= 2
 
 
 def test_upload_media_mov_without_pbar_nameerror(gp, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
