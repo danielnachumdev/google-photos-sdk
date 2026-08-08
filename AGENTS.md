@@ -49,7 +49,7 @@ uv sync --group dev     # also mypy, pylint, twine, pytest, typing stubs
 - Typecheck / lint: `uv run mypy` / `uv run pylint gp_wrapper` (config from pyproject)
 - Publish: `uv run python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.1+: enforcers, mypy/pylint/pytest, **`uv build`** from `pyproject.toml`, PyPI + git). Bump `VERSION` in `publish.py` first. Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`. quickpub still rewrites `setup.py` / `pyproject.toml` / `MANIFEST.in` before build; `SetuptoolsBuildSchema` is not used (`python setup.py sdist` is deprecated).
 
-Known bug: importing on Linux can crash in `win32_ctime` (`NameError`). Do not fix that refactor unless asked. Windows import is the supported path.
+File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`.
 
 ## Tests
 

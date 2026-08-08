@@ -1,12 +1,17 @@
+"""Portable file timestamps via os.stat / os.utime (no Win32 ctypes).
+
+Creation/birth time is *read* when the platform exposes it (``st_birthtime``,
+or ``st_ctime`` on Windows). Setting a distinct creation time is not portable;
+``FileTimeService.set`` applies access and modification with ``os.utime``. If
+only ``creation`` is provided, it is used for both atime and mtime (matches
+video transcode timestamp copy in ``CoreMediaItem.upload_media``).
 """
-credit to https://github.com/Delgan/win32-setctime/blob/master/win32_setctime.py
-and modifications by me
-"""
+from __future__ import annotations
+
 import os
-from typing import Optional
-from datetime import datetime
-from enum import IntEnum
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional, Tuple
 
 
 @dataclass
@@ -15,186 +20,97 @@ class FileTime:
     access: Optional[datetime] = None
     modification: Optional[datetime] = None
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(\n\tcreation={str(self.creation)},\n\tmodification={str(self.modification)},\n\taceess={str(self.access)}\n)"
 
+class FileTimeService:
+    """Read and write file timestamps using portable OS APIs."""
 
-try:
-    from ctypes import byref, get_last_error, wintypes, WinDLL, WinError
-
-    kernel32 = WinDLL("kernel32", use_last_error=True)
-
-    CreateFileW = kernel32.CreateFileW
-    SetFileTime = kernel32.SetFileTime
-    # Modification
-    GetFileTime = kernel32.GetFileTime
-    CloseHandle = kernel32.CloseHandle
-
-    CreateFileW.argtypes = (
-        wintypes.LPWSTR,
-        wintypes.DWORD,
-        wintypes.DWORD,
-        wintypes.LPVOID,
-        wintypes.DWORD,
-        wintypes.DWORD,
-        wintypes.HANDLE,
-    )
-    CreateFileW.restype = wintypes.HANDLE
-
-    SetFileTime.argtypes = (
-        wintypes.HANDLE,
-        wintypes.PFILETIME,
-        wintypes.PFILETIME,
-        wintypes.PFILETIME,
-    )
-    SetFileTime.restype = wintypes.BOOL
-
-    # modification
-    # https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfiletime
-    GetFileTime.argtypes = (
-        wintypes.HANDLE,
-        wintypes.LPFILETIME,
-        wintypes.LPFILETIME,
-        wintypes.LPFILETIME,
-    )
-    GetFileTime.restype = wintypes.BOOL
-
-    CloseHandle.argtypes = (wintypes.HANDLE,)
-    CloseHandle.restype = wintypes.BOOL
-except (ImportError, AttributeError, OSError, ValueError):
-    SUPPORTED = False
-else:
-    SUPPORTED = os.name == "nt"
-
-
-class HELPERS:
-
-    class CreationDisposition(IntEnum):
-        # https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
-        CREATE_NEW = 1
-        CREATE_ALWAYS = 2
-        OPEN_EXISTING = 3
-        OPEN_ALWAYS = 4
-        TRUNCATE_EXISTING = 5
-
-    @staticmethod
-    def epoch_time_to_windows_time(timestamp: float) -> int:
-        # https://stackoverflow.com/questions/1566645/filetime-to-int64
-        # https://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux
-        return int(timestamp * 10000000) + 116444736000000000
-
-    @staticmethod
-    def windows_time_to_epoch(timestamp: int) -> int:
-        # https://stackoverflow.com/questions/1566645/filetime-to-int64
-        # https://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux
-        return (timestamp-116444736000000000)//10000000
-
-    @staticmethod
-    def close_handle(handle) -> None:
-        if not wintypes.BOOL(CloseHandle(handle)):
-            raise WinError(get_last_error())
-
-    @staticmethod
-    def datetime_to_wintypes_FILETIME(dt: Optional[datetime]) -> wintypes.FILETIME:
-        if dt is None:
-            return wintypes.FILETIME(0xFFFFFFFF, 0xFFFFFFFF)
-
-        timestamp = HELPERS.epoch_time_to_windows_time(dt.timestamp())
-        if not 0 < timestamp < (1 << 64):
-            raise ValueError(
-                "The system value of the timestamp exceeds u64 size: %d" % timestamp)
-
-        return wintypes.FILETIME(timestamp & 0xFFFFFFFF, timestamp >> 32)
-
-
-def set_file_time(filepath: str, filetime: FileTime, *, follow_symlinks: bool = True) -> None:
-    """Set the "ctime" (creation time) attribute of a file given an unix timestamp (Windows only)."""
-    if not SUPPORTED:
-        raise OSError(
-            "This function is only available for the Windows platform.")
-
-    if filetime.access is None and filetime.modification is None and filetime.creation is None:
-        raise ValueError(
-            "This function has no meaning if all values in 'filetime' argument are None. This is probably a mistake")
-
-    filepath = os.path.normpath(os.path.abspath(str(filepath)))
-
-    ctime: wintypes.FILETIME = HELPERS.datetime_to_wintypes_FILETIME(
-        filetime.creation)
-    atime: wintypes.FILETIME = HELPERS.datetime_to_wintypes_FILETIME(
-        filetime.access)
-    mtime: wintypes.FILETIME = HELPERS.datetime_to_wintypes_FILETIME(
-        filetime.modification)
-
-    flags = 128 | 0x02000000
-
-    if not follow_symlinks:
-        flags |= 0x00200000
-
-    handle = wintypes.HANDLE(
-        CreateFileW(
-            filepath,
-            0x1FFFFFFF,
-            0,
-            None,
-            HELPERS.CreationDisposition.OPEN_EXISTING.value,
-            flags,
-            None
+    def get(self, filepath: str, follow_symlinks: bool = True) -> FileTime:
+        st = self._stat(filepath, follow_symlinks=follow_symlinks)
+        return FileTime(
+            creation=datetime.fromtimestamp(self._creation_ts(st)),
+            access=datetime.fromtimestamp(st.st_atime),
+            modification=datetime.fromtimestamp(st.st_mtime),
         )
-    )
-    if handle.value == wintypes.HANDLE(-1).value:
-        raise WinError(get_last_error())
 
-    if not wintypes.BOOL(SetFileTime(handle, byref(ctime), byref(atime), byref(mtime))):
-        raise WinError(get_last_error())
-    HELPERS.close_handle(handle)
+    def set(
+        self,
+        filepath: str,
+        filetime: FileTime,
+        *,
+        follow_symlinks: bool = True,
+    ) -> None:
+        self._require_any_timestamp(filetime)
+        st = self._stat(filepath, follow_symlinks=follow_symlinks)
+        atime_ns, mtime_ns = self._resolve_atime_mtime_ns(filetime, st)
+        self._apply_utime(
+            self._absolute_path(filepath),
+            atime_ns,
+            mtime_ns,
+            follow_symlinks=follow_symlinks,
+        )
 
+    def _absolute_path(self, filepath: str) -> str:
+        return os.path.normpath(os.path.abspath(str(filepath)))
 
-def get_file_time(filepath: str, follow_symlinks: bool = True) -> FileTime:
-    if not SUPPORTED:
-        raise OSError(
-            "This function is only available for the Windows platform.")
+    def _stat(self, filepath: str, follow_symlinks: bool = True) -> os.stat_result:
+        path = self._absolute_path(filepath)
+        if follow_symlinks:
+            return os.stat(path)
+        return os.lstat(path)
 
-    filepath = os.path.normpath(os.path.abspath(str(filepath)))
+    def _creation_ts(self, st: os.stat_result) -> float:
+        birth = getattr(st, "st_birthtime", None)
+        if birth is not None:
+            return float(birth)
+        return float(st.st_ctime)
 
-    # placeholder variables to hold values for
-    ctime = wintypes.FILETIME()  # creation time
-    atime = wintypes.FILETIME()  # last access time
-    mtime = wintypes.FILETIME()  # last modification time
+    def _to_ns(self, dt: Optional[datetime], fallback_seconds: float) -> int:
+        seconds = dt.timestamp() if dt is not None else fallback_seconds
+        return int(seconds * 1_000_000_000)
 
-    flags = 0x00000080 | 0x02000000
+    def _require_any_timestamp(self, filetime: FileTime) -> None:
+        if (
+            filetime.access is None
+            and filetime.modification is None
+            and filetime.creation is None
+        ):
+            raise ValueError(
+                "This function has no meaning if all values in 'filetime' argument are None. This is probably a mistake"
+            )
 
-    if not follow_symlinks:
-        flags |= 0x00200000
-    handle = wintypes.HANDLE(CreateFileW(
-        filepath,  # filepath
-        0x1FFFFFFF,  # access rights
-        0,  # share mode
-        None,  # security attributes
-        HELPERS.CreationDisposition.OPEN_EXISTING.value,  # creation disposition
-        flags,  # flags and attributes
-        None  # template file
-    ))
-    if handle.value == wintypes.HANDLE(-1).value:
-        raise WinError(get_last_error())
+    def _resolve_atime_mtime_ns(
+        self, filetime: FileTime, st: os.stat_result
+    ) -> Tuple[int, int]:
+        atime = filetime.access if filetime.access is not None else filetime.creation
+        mtime = (
+            filetime.modification
+            if filetime.modification is not None
+            else filetime.creation
+        )
+        return (
+            self._to_ns(atime, st.st_atime),
+            self._to_ns(mtime, st.st_mtime),
+        )
 
-    if not wintypes.BOOL(GetFileTime(handle, byref(ctime), byref(atime), byref(mtime))):
-        raise WinError(get_last_error())
-
-    HELPERS.close_handle(handle)
-
-    # reverse of calculation in setctime function above.
-    stage1 = map(
-        lambda time: time.dwHighDateTime << 32 | time.dwLowDateTime,  # type:ignore
-        [ctime, mtime, atime]
-    )
-    stage2 = map(HELPERS.windows_time_to_epoch, stage1)
-    stage3 = map(datetime.fromtimestamp, stage2)
-    return FileTime(*list(stage3))
+    def _apply_utime(
+        self,
+        filepath: str,
+        atime_ns: int,
+        mtime_ns: int,
+        *,
+        follow_symlinks: bool,
+    ) -> None:
+        try:
+            os.utime(
+                filepath,
+                ns=(atime_ns, mtime_ns),
+                follow_symlinks=follow_symlinks,
+            )
+        except (NotImplementedError, TypeError):
+            os.utime(filepath, ns=(atime_ns, mtime_ns))
 
 
 __all__ = [
-    "set_file_time",
-    "get_file_time",
-    'FileTime'
+    "FileTime",
+    "FileTimeService",
 ]

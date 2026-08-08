@@ -42,6 +42,5 @@ def test_utils_package_reexports() -> None:
     assert utils.batchify
     assert utils.ProgressBar
     assert utils.ProgressBarInjector
-    assert utils.set_file_time
-    assert utils.get_file_time
     assert utils.FileTime
+    assert utils.FileTimeService

@@ -30,7 +30,7 @@ from gp_wrapper.utils.structures.data_types import (
     NewMediaItem,
     SimpleMediaItem,
 )
-from gp_wrapper.utils.win32_ctime import FileTime
+from gp_wrapper.utils.file_time import FileTime
 from gp_wrapper.utils.structures.enums import MediaItemMaskTypes, PositionType
 
 from .conftest import (
@@ -130,12 +130,14 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     )
     now = datetime(2020, 1, 2, 3, 4, 5)
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.get_file_time",
-        lambda path: FileTime(creation=now, access=now, modification=now),
+        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.get",
+        lambda self, path, follow_symlinks=True: FileTime(
+            creation=now, access=now, modification=now
+        ),
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.set_file_time",
-        lambda path, ft: None,
+        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.set",
+        lambda self, path, ft, follow_symlinks=True: None,
     )
     gp.session.post.return_value = make_response(content=b"tok-mov")
     bar = DummyProgressBar(total=1)
