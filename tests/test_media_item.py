@@ -184,16 +184,34 @@ def test_upload_media_mov_copies_atime_mtime_to_converted_file(
     assert abs(st.st_mtime - dated.timestamp()) <= 2
 
 
-def test_upload_media_mov_without_pbar_nameerror(gp, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Existing bug: clip is only created when pbar is not None."""
+def test_upload_media_mov_converts_without_pbar(
+    gp, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """nachum_migrator calls upload_media(gp, path) with no pbar."""
     src = tmp_path / "clip.wmv"
-    src.write_bytes(b"wmv")
+    dest = tmp_path / "clip.mp4"
+    src.write_bytes(b"wmv-bytes")
+    dated = datetime(2015, 6, 15, 18, 30, 0)
+    os.utime(src, (dated.timestamp(), dated.timestamp()))
+
+    mock_clip = MagicMock()
+
+    def fake_write(path, **kwargs):
+        Path(path).write_bytes(b"converted-mp4")
+
+    mock_clip.write_videofile.side_effect = fake_write
     monkeypatch.setattr(
         "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
-        lambda path: MagicMock(),
+        lambda path: mock_clip,
     )
-    with pytest.raises(NameError):
-        CoreMediaItem.upload_media(gp, str(src), pbar=None)
+    gp.session.post.return_value = make_response(content=b"tok-no-pbar")
+    token = CoreMediaItem.upload_media(gp, str(src), pbar=None)
+    assert token == "tok-no-pbar"
+    assert dest.exists()
+    mock_clip.write_videofile.assert_called_once()
+    st = os.stat(dest)
+    assert abs(st.st_atime - dated.timestamp()) <= 2
+    assert abs(st.st_mtime - dated.timestamp()) <= 2
 
 
 def test_upload_media_mov_already_converted(gp, tmp_path) -> None:
