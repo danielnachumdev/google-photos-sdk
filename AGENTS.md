@@ -49,7 +49,7 @@ uv sync --group dev     # also mypy, pylint, twine, pytest, typing stubs
 - Typecheck / lint: `uv run mypy` / `uv run pylint gp_wrapper` (config from pyproject)
 - Publish: `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+: `UvBuildSchema`, `generate_project_files=False` so existing `pyproject.toml` is kept). Bump `VERSION` in `publish.py` first. Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`.
 
-File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created). `CoreMediaItem.upload_media` copies those onto transcoded non-mp4 videos after reading bytes (so Windows atime is not clobbered by the upload open). Transcode runs whether or not `pbar` is passed (nachum_migrator does not pass one).
+File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created). `CoreMediaItem.upload_media` copies those onto transcoded non-mp4 videos after reading bytes (so Windows atime is not clobbered by the upload open). Before reading upload bytes, it also embeds MP4 `creation_time` from the source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) — Google Photos dates videos from container metadata, not FileTime. Transcode runs whether or not `pbar` is passed (nachum_migrator does not pass one).
 
 ## Tests
 

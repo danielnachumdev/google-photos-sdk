@@ -134,6 +134,7 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     modification = datetime(2015, 6, 15, 18, 30, 0)
     creation = datetime(2026, 1, 1, 12, 0, 0)
     captured: dict = {}
+    embed_calls: list = []
     monkeypatch.setattr(
         "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.get",
         lambda self, path, follow_symlinks=True: FileTime(
@@ -143,6 +144,10 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     monkeypatch.setattr(
         "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.set",
         lambda self, path, ft, follow_symlinks=True: captured.update(path=path, ft=ft),
+    )
+    monkeypatch.setattr(
+        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        lambda path, stamp: embed_calls.append((path, stamp)) or True,
     )
     gp.session.post.return_value = make_response(content=b"tok-mov")
     bar = DummyProgressBar(total=1)
@@ -155,6 +160,7 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     assert captured["ft"].access == access
     assert captured["ft"].modification == modification
     assert captured["ft"].creation is None
+    assert embed_calls == [(str(dest), modification)]
 
 
 def test_upload_media_mov_copies_atime_mtime_to_converted_file(
@@ -175,6 +181,10 @@ def test_upload_media_mov_copies_atime_mtime_to_converted_file(
     monkeypatch.setattr(
         "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
+    )
+    monkeypatch.setattr(
+        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        lambda path, stamp: True,
     )
     gp.session.post.return_value = make_response(content=b"tok-dated")
     token = CoreMediaItem.upload_media(gp, str(src), pbar=DummyProgressBar(total=1))
@@ -204,6 +214,11 @@ def test_upload_media_mov_converts_without_pbar(
         "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
+    embed_calls: list = []
+    monkeypatch.setattr(
+        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        lambda path, stamp: embed_calls.append((path, stamp)) or True,
+    )
     gp.session.post.return_value = make_response(content=b"tok-no-pbar")
     token = CoreMediaItem.upload_media(gp, str(src), pbar=None)
     assert token == "tok-no-pbar"
@@ -212,6 +227,65 @@ def test_upload_media_mov_converts_without_pbar(
     st = os.stat(dest)
     assert abs(st.st_atime - dated.timestamp()) <= 2
     assert abs(st.st_mtime - dated.timestamp()) <= 2
+    assert len(embed_calls) == 1
+    assert embed_calls[0][0] == str(dest)
+    assert abs((embed_calls[0][1] - dated).total_seconds()) <= 2
+
+
+def test_upload_media_transcode_embeds_creation_time_before_upload_bytes(
+    gp, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Uploaded payload must include creation_time (Photos ignores FileTime)."""
+    src = tmp_path / "clip.mov"
+    dest = tmp_path / "clip.mp4"
+    src.write_bytes(b"mov")
+    dated = datetime(2011, 6, 11, 12, 0, 0)
+    os.utime(src, (dated.timestamp(), dated.timestamp()))
+
+    mock_clip = MagicMock()
+
+    def fake_write(path, **kwargs):
+        # Real tiny MP4 so embed_mp4_creation_time can rewrite it.
+        ffmpeg = __import__("imageio_ffmpeg").get_ffmpeg_exe()
+        subprocess_mod = __import__("subprocess")
+        subprocess_mod.run(
+            [
+                ffmpeg,
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=black:s=64x64:d=0.1",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+        )
+
+    mock_clip.write_videofile.side_effect = fake_write
+    monkeypatch.setattr(
+        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        lambda path: mock_clip,
+    )
+    uploaded: dict = {}
+
+    def capture_post(url, headers=None, data=None, **kwargs):
+        uploaded["data"] = data
+        return make_response(content=b"tok-meta")
+
+    gp.session.post.side_effect = capture_post
+    token = CoreMediaItem.upload_media(gp, str(src), pbar=None)
+    assert token == "tok-meta"
+    # After upload_media, dest should still carry creation_time on disk.
+    from tests.test_mp4_metadata import _read_creation_time
+
+    assert _read_creation_time(dest) == dated
+    # And the bytes posted to Google should match the stamped file.
+    assert uploaded["data"] == dest.read_bytes()
 
 
 def test_upload_media_mov_already_converted(gp, tmp_path) -> None:

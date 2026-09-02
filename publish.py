@@ -23,7 +23,7 @@ from quickpub import (
     publish,
 )
 
-VERSION = "0.9.11"
+VERSION = "0.9.12"
 
 
 def main() -> None:

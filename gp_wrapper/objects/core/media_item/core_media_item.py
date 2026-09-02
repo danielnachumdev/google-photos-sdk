@@ -10,6 +10,7 @@ from ....utils import MediaItemMaskTypes, RequestType, AlbumPosition, NewMediaIt
 from ....utils import MediaItemID, AlbumId, Path, NextPageToken, UploadToken
 from ....utils import UPLOAD_MEDIA_ITEM_ENDPOINT, MEDIA_ITEMS_CREATE_ENDPOINT
 from ....utils import slowdown, get_python_version, FileTime, FileTimeService
+from ....utils import embed_mp4_creation_time
 if get_python_version() < (3, 9):
     from typing import List as t_list, Tuple as t_tuple, Dict as t_dict  # pylint: disable=ungrouped-imports,redefined-builtin
 else:
@@ -93,6 +94,15 @@ class CoreMediaItem(Printable, OnlyPrivate):
                     clip = moviepy.VideoFileClip(media)
                     clip.write_videofile(new_path, verbose=False, logger=None)
                     copied_times = FileTimeService().get(media)
+                    # Photos uses container creation_time from the uploaded bytes,
+                    # not filesystem mtime — stamp before reading the payload.
+                    stamp = (
+                        copied_times.modification
+                        or copied_times.access
+                        or copied_times.creation
+                    )
+                    if stamp is not None:
+                        embed_mp4_creation_time(new_path, stamp)
             header_type = HeaderType.OCTET
             additional_headers["X-Goog-Upload-Content-Type"] = MimeType.MP4.value
         with open(new_path, 'rb') as data_stream:
