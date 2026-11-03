@@ -1,5 +1,7 @@
-# gp_wrapper v=0.9.11
+# gp_wrapper v=0.9.12
 A Google Photos API wrapper library
+
+Requires **Python >= 3.11**.
 
 * Official API is already supported
 

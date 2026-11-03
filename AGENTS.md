@@ -23,7 +23,7 @@
 
 ## Tech stack
 
-- **Python** `>=3.8.0` (keep unless uv/tooling forces a bump)
+- **Python** `>=3.11` (raised for Dependabot-fixed deps such as Pillow 13)
 - **Toolchain:** [uv](https://docs.astral.sh/uv/) + `pyproject.toml` / `uv.lock`
 - **Runtime / publish:** `[project].dependencies` — `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`, `requests`, `tqdm`, `moviepy>=1.0.3,<2`
 - **Dev:** `[dependency-groups].dev` — mypy, pylint, pytest, pytest-cov, pytest-xdist, `quickpub>=4.1.3`, `types-requests`, `types-tqdm` (no duplicated runtime deps)

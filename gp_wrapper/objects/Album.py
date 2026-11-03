@@ -5,11 +5,7 @@ from .core import GooglePhotos, CoreAlbum, CoreEnrichmentItem
 from .MediaItem import MediaItem
 from ..utils import PositionType, EnrichmentType, RequestType, AlbumMaskType, \
     NewMediaItem, SimpleMediaItem, MediaItemResult, batchify
-from ..utils import Path, NextPageToken, get_python_version
-if get_python_version() < (3, 9):
-    from typing import List as t_list, Tuple as t_tuple
-else:
-    from builtins import list as t_list, tuple as t_tuple  # type:ignore
+from ..utils import Path, NextPageToken
 
 
 class Album(CoreAlbum):
@@ -146,7 +142,7 @@ class Album(CoreAlbum):
         description_parts: Iterable[str],
         relative_position: PositionType = PositionType.FIRST_IN_ALBUM,
         optional_additional_data: Optional[dict] = None
-    ) -> Iterable[t_tuple[Optional[Response], Optional[CoreEnrichmentItem]]]:
+    ) -> Iterable[tuple[Optional[Response], Optional[CoreEnrichmentItem]]]:
         """a facade function that uses 'add_enrichment' to simplify adding a description
 
         Args:
@@ -165,7 +161,7 @@ class Album(CoreAlbum):
                 raise ValueError(
                     f"the description parts should be less than {HARD_LIMIT} characters"
                     "long because of a hard limit google employs")
-        chunks: t_list[str] = []
+        chunks: list[str] = []
         tmp_chunk = ""
         for text in parts:
             if len(tmp_chunk) + len(text) >= 1000:
@@ -228,7 +224,7 @@ class Album(CoreAlbum):
     def upload_and_add(
         self,
         paths: Iterable[Path]
-    ) -> t_list[MediaItemResult]:
+    ) -> list[MediaItemResult]:
         """uploads the media to the library and also adds them to current album
 
         Args:
@@ -238,14 +234,14 @@ class Album(CoreAlbum):
             list[MediaItemResult]: resulting objects of the uploads
         """
         # same code as MediaItem.add_to_library but it is more memory efficient this way
-        items: t_list[NewMediaItem] = []
+        items: list[NewMediaItem] = []
         for path in paths:
             token = MediaItem.upload_media(self.gp, path)
             filename = pathlib.Path(path).stem
             item = NewMediaItem("", SimpleMediaItem(token, filename))
             items.append(item)
-        batches: t_list[t_list[NewMediaItem]] = []
-        batch: t_list[NewMediaItem] = []
+        batches: list[list[NewMediaItem]] = []
+        batch: list[NewMediaItem] = []
         for item in items:
             if len(batch) >= 50:
                 batches.append(batch)

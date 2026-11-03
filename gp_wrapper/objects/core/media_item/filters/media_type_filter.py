@@ -1,9 +1,5 @@
 from enum import Enum
-from .....utils import Printable, Dictable, get_python_version
-if get_python_version() < (3, 9):
-    from typing import List as t_list  # pylint: disable=ungrouped-imports,redefined-builtin
-else:
-    from builtins import list as t_list  # type:ignore
+from .....utils import Printable, Dictable
 
 
 class MediaType(Enum):
@@ -18,7 +14,7 @@ class MediaTypeFilter(Printable, Dictable):
     see https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search#mediatypefilter
     """
 
-    def __init__(self, mediaTypes: t_list[MediaType]) -> None:
+    def __init__(self, mediaTypes: list[MediaType]) -> None:
         if len(mediaTypes) != 1:
             raise ValueError(
                 "This field should be populated with only one media type. "

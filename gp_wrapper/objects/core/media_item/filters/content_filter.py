@@ -1,10 +1,6 @@
 from typing import Optional
 from enum import Enum
-from .....utils import Printable, Dictable, get_python_version
-if get_python_version() < (3, 9):
-    from typing import List as t_list  # pylint: disable=ungrouped-imports,redefined-builtin
-else:
-    from builtins import list as t_list  # type:ignore
+from .....utils import Printable, Dictable
 
 
 class ContentCategory(Enum):
@@ -72,8 +68,8 @@ class ContentFilter(Printable, Dictable):
 
     def __init__(
         self,
-        includedContentCategories: Optional[t_list[ContentCategory]] = None,
-        excludedContentCategories: Optional[t_list[ContentCategory]] = None
+        includedContentCategories: Optional[list[ContentCategory]] = None,
+        excludedContentCategories: Optional[list[ContentCategory]] = None
     ) -> None:
         if not includedContentCategories and not excludedContentCategories:
             raise ValueError(
