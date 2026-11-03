@@ -8,7 +8,9 @@
 
 ```
 .
+├── .github/             # CODEOWNERS, dependabot.yml, workflows/
 ├── .github/workflows/   # CI (Py 3.11–3.13) + CD (label-driven semver Release)
+├── SECURITY.md          # Private vulnerability reporting policy
 ├── gp_wrapper/          # Importable package
 ├── scripts/release/     # release_semver.py + build_release_wheel.sh (CD)
 ├── tests/               # pytest suite (do not delete)
@@ -58,6 +60,13 @@ File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`
 ## Tests
 
 `tests/` is a pytest + pytest-cov suite targeting ≥95% coverage. Never delete `tests/`. Coverage config is in `pyproject.toml`.
+
+## Security / repo hygiene
+
+- **CODEOWNERS:** `.github/CODEOWNERS` — `@danielnachumdev` owns all paths (branch protection can require code-owner review).
+- **Dependabot:** `.github/dependabot.yml` — weekly `pip` + `github-actions` update PRs (labeled `noBump`).
+- **Advisories:** `SECURITY.md` + GitHub private vulnerability reporting.
+- **CD gate:** every PR into `main` needs exactly one of `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump` (ruleset / “Release label” check).
 
 ## Sensitive / ignored files
 
