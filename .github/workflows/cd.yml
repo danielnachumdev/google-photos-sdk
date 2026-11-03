@@ -1,7 +1,10 @@
 name: CD
 
-# Thin orchestrator. Semver at CD = bump → wheel → GitHub Release → move vMAJOR
-# → optional PyPI (same wheel). Pin:
+# Thin orchestrator. Semver at CD = bump → wheel → GitHub Release.
+# PyPI Trusted Publishing must run in THIS workflow file (not the reusable
+# semver-cd job): PyPI matches OIDC job_workflow_ref and does not support
+# reusable workflows yet (pypi/warehouse#11096).
+# Pin:
 #   uses: danielnachumdev/actions/.github/workflows/semver-cd.yml@latest
 
 on:
@@ -23,7 +26,6 @@ permissions:
   contents: write
   pull-requests: read
   actions: read
-  # Required by semver-cd (PyPI job declares OIDC even when skipped).
   id-token: write
 
 concurrency:
@@ -44,9 +46,44 @@ jobs:
       standards-ref: latest
       dry-run: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true' }}
       sha: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || (github.event.inputs.sha != '' && github.event.inputs.sha || github.sha) }}
-      publish-pypi: true
-      pypi-auth: trusted-publishing
-    # User-owned repo: map by name (secrets: inherit is org/enterprise only).
-    # PYPI_API_TOKEN unused with trusted-publishing; still mapped (empty OK).
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      # Publish is inlined below so OIDC claims use this repo's cd.yml.
+      publish-pypi: false
+
+  pypi:
+    name: PyPI
+    needs: [semver]
+    if: >
+      needs.semver.outputs.skip != 'true' &&
+      needs.semver.outputs.tag != '' &&
+      !(github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          ignore-empty-workdir: true
+
+      - name: Download wheel from GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.semver.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh release download "${TAG}" --repo "${REPO}" --dir dist --pattern '*.whl'
+          wheel="$(ls -1 dist/*.whl | head -1)"
+          [[ -n "${wheel}" && -f "${wheel}" ]]
+          echo "Downloaded ${wheel}"
+
+      - name: Publish to PyPI (Trusted Publishing)
+        run: |
+          set -euo pipefail
+          wheel="$(ls -1 dist/*.whl | head -1)"
+          [[ -n "${wheel}" && -f "${wheel}" ]]
+          echo "Publishing ${wheel} with Trusted Publishing (OIDC)"
+          uv publish "${wheel}" --trusted-publishing always
