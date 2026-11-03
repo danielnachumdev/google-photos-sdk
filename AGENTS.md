@@ -64,7 +64,7 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 ## Code style & domain notes
 
 - Follow the writing-python skill when adding/refactoring modules (class-first, SRP files, no stub shims).
-- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("gp_wrapper")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel).
+- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("google-photos-sdk")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel). Import package name remains `gp_wrapper`.
 - **File timestamps:** use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`; portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created).
 - **`CoreMediaItem.upload_media`:** copies FileTimes onto transcoded non-mp4 videos after reading bytes; embeds MP4 `creation_time` from source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) before upload bytes are read (Google Photos dates videos from container metadata). Transcode runs whether or not `pbar` is passed.
 
