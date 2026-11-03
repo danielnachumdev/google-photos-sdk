@@ -1,1 +1,1 @@
-# Test package for gp_wrapper.
+# Test package for gpsdk.

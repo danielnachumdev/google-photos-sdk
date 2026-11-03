@@ -4,10 +4,10 @@ from threading import Semaphore
 from typing import Generator, Optional, Iterable
 from queue import Queue
 from requests.models import Response  # pylint: disable=import-error
-from gp_wrapper.objects.core.gp import GooglePhotos
-from gp_wrapper.objects.core.media_item.core_media_item import CoreMediaItem
-from gp_wrapper.objects.core.media_item.filters import SearchFilter
-from gp_wrapper.utils import AlbumId, AlbumPosition, MediaItemResult, NewMediaItem, NextPageToken, Path
+from gpsdk.objects.core.gp import GooglePhotos
+from gpsdk.objects.core.media_item.core_media_item import CoreMediaItem
+from gpsdk.objects.core.media_item.filters import SearchFilter
+from gpsdk.utils import AlbumId, AlbumPosition, MediaItemResult, NewMediaItem, NextPageToken, Path
 from .core import GooglePhotos, CoreMediaItem, MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE,\
     MEDIA_ITEM_LIST_MAXIMUM_PAGE_SIZE, MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS
 from ..utils import MediaItemMaskTypes, NewMediaItem, SimpleMediaItem

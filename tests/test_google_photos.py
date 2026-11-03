@@ -5,9 +5,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from gp_wrapper.objects.core.gp import GooglePhotos
-from gp_wrapper.utils.pbar import ProgressBarInjector
-from gp_wrapper.utils.structures.enums import HeaderType, RequestType
+from gpsdk.objects.core.gp import GooglePhotos
+from gpsdk.utils.pbar import ProgressBarInjector
+from gpsdk.utils.structures.enums import HeaderType, RequestType
 
 from .conftest import DummyProgressBar, MEDIA_ITEM_DICT, make_response
 
@@ -28,11 +28,11 @@ def test_init_does_not_read_real_secrets(monkeypatch: pytest.MonkeyPatch) -> Non
         return flow
 
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.gp.InstalledAppFlow.from_client_secrets_file",
+        "gpsdk.objects.core.gp.InstalledAppFlow.from_client_secrets_file",
         fake_from_file,
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.gp.requests.Session",
+        "gpsdk.objects.core.gp.requests.Session",
         lambda: MagicMock(),
     )
     GooglePhotos(client_secrets_path="not-a-real-file.json")

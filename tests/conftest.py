@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from gp_wrapper.utils.pbar import DEFAULT_BAR_FORMAT, ProgressBar
+from gpsdk.utils.pbar import DEFAULT_BAR_FORMAT, ProgressBar
 
 
 class DummyProgressBar(ProgressBar):
@@ -107,7 +107,7 @@ def make_response(
 def _disable_slowdown_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     """upload_media is wrapped with @slowdown(2); never actually sleep."""
     monkeypatch.setattr("time.sleep", lambda *a, **k: None)
-    monkeypatch.setattr("gp_wrapper.utils.helpers.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("gpsdk.utils.helpers.time.sleep", lambda *a, **k: None)
 
 
 @pytest.fixture
@@ -123,15 +123,15 @@ def gp(monkeypatch: pytest.MonkeyPatch, mock_credentials: MagicMock):
     mock_flow = MagicMock()
     mock_flow.run_local_server.return_value = mock_credentials
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.gp.InstalledAppFlow.from_client_secrets_file",
+        "gpsdk.objects.core.gp.InstalledAppFlow.from_client_secrets_file",
         lambda *a, **k: mock_flow,
     )
     mock_session = MagicMock(name="Session")
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.gp.requests.Session",
+        "gpsdk.objects.core.gp.requests.Session",
         lambda: mock_session,
     )
-    from gp_wrapper.objects.core.gp import GooglePhotos
+    from gpsdk.objects.core.gp import GooglePhotos
 
     # Session() is mocked above, so __init__ already stores mock_session.
     return GooglePhotos(client_secrets_path="nonexistent_secrets.json")

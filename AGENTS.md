@@ -1,6 +1,6 @@
-# GP Wrapper – Agent Context
+# google-photos-sdk – Agent Context
 
-Implementation guide for coding agents changing **gp_wrapper**. Product pitch and user-facing install: [`README.md`](README.md).
+Implementation guide for coding agents changing **gpsdk** (import package; formerly `gp_wrapper`). Product pitch and user-facing install: [`README.md`](README.md).
 
 ---
 
@@ -9,7 +9,7 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 | Question | Answer |
 | -------- | ------ |
 | What is this? | Python package wrapping the **Google Photos Library API** |
-| Importable code | `gp_wrapper/` |
+| Importable code | `gpsdk/` |
 | Toolchain | [uv](https://docs.astral.sh/uv/) + `pyproject.toml` / `uv.lock` |
 | Python | `>=3.11` (CI matrix **3.11, 3.12, 3.13**) |
 | Tests | `tests/` — pytest + coverage (≥95%); **never delete** |
@@ -18,7 +18,7 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 ```text
 .
 ├── .github/             # CODEOWNERS, dependabot.yml, thin CI/CD orchestrators
-├── gp_wrapper/          # Importable package
+├── gpsdk/               # Importable package
 ├── tests/
 ├── pyproject.toml
 ├── uv.lock
@@ -43,10 +43,10 @@ uv sync --group dev     # + mypy, pylint, pytest, stubs
 
 | Task | Command |
 | ---- | ------- |
-| Import smoke | `uv run python -c "import gp_wrapper"` |
+| Import smoke | `uv run python -c "import gpsdk"` |
 | Tests | `uv run pytest` |
 | Types | `uv run mypy` |
-| Lint | `uv run pylint gp_wrapper` |
+| Lint | `uv run pylint gpsdk` |
 
 Config for mypy / pylint / pytest / coverage lives in `pyproject.toml`.
 
@@ -64,7 +64,7 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 ## Code style & domain notes
 
 - Follow the writing-python skill when adding/refactoring modules (class-first, SRP files, no stub shims).
-- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("google-photos-sdk")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel). Import package name remains `gp_wrapper`.
+- Public surface is re-exported from `gpsdk/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("google-photos-sdk")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel). Distribution name stays `google-photos-sdk`; import package is `gpsdk`.
 - **File timestamps:** use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`; portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created).
 - **`CoreMediaItem.upload_media`:** copies FileTimes onto transcoded non-mp4 videos after reading bytes; embeds MP4 `creation_time` from source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) before upload bytes are read (Google Photos dates videos from container metadata). Transcode runs whether or not `pbar` is passed.
 

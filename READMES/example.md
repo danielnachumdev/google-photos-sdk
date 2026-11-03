@@ -4,7 +4,7 @@ What you will find in this example
 * uploading media to google's servers
 * using the upload token to "attach" uploaded media to  user's account and in this case also the specific album from earlier
 ```python
-from gp_wrapper import GooglePhotos, Album, MediaItem, NewMediaItem, SimpleMediaItem
+from gpsdk import GooglePhotos, Album, MediaItem, NewMediaItem, SimpleMediaItem
 CLIENT_SECRETS="path to your client_secrets.json file"
 
 gp = GooglePhotos(CLIENT_SECRETS)
