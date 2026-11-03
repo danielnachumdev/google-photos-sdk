@@ -8,11 +8,13 @@
 
 ```
 .
+├── .github/workflows/   # CI (Py 3.11–3.13) + CD (label-driven semver Release)
 ├── gp_wrapper/          # Importable package
+├── scripts/release/     # release_semver.py + build_release_wheel.sh (CD)
 ├── tests/               # pytest suite (do not delete)
 ├── pyproject.toml       # uv project: runtime + [dependency-groups] dev + tool config
 ├── uv.lock              # Lockfile (track in git)
-├── publish.py           # quickpub publish() config (QA + build + PyPI/git)
+├── publish.py           # optional local quickpub publish (PyPI); CD owns GitHub Releases
 ├── README.md
 ├── LISENCE              # MIT (filename spelling is historical)
 ├── client_secrets.json  # Do not commit
@@ -47,7 +49,9 @@ uv sync --group dev     # also mypy, pylint, twine, pytest, typing stubs
 - Import: `uv run python -c "import gp_wrapper"`
 - Tests: `uv run pytest` (after `uv sync --group dev`)
 - Typecheck / lint: `uv run mypy` / `uv run pylint gp_wrapper` (config from pyproject)
-- Publish: `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+: `UvBuildSchema`, `generate_project_files=False` so existing `pyproject.toml` is kept). Bump `VERSION` in `publish.py` first. Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`.
+- **CI:** `.github/workflows/ci.yml` — pytest on Python **3.11, 3.12, 3.13**; aggregate check name `CI`.
+- **CD / Release:** `.github/workflows/cd.yml` — after successful CI on `main`, label-driven semver GitHub Release + wheel. Every PR into `main` needs **exactly one** of: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`. Source of truth is Release tags (not committed version bumps). If no Release exists yet, CD seeds from `pyproject.toml` version.
+- Optional local PyPI publish: `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+). Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`.
 
 File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created). `CoreMediaItem.upload_media` copies those onto transcoded non-mp4 videos after reading bytes (so Windows atime is not clobbered by the upload open). Before reading upload bytes, it also embeds MP4 `creation_time` from the source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) — Google Photos dates videos from container metadata, not FileTime. Transcode runs whether or not `pbar` is passed (nachum_migrator does not pass one).
 

@@ -28,5 +28,6 @@ A-lot of well defined API inspired Classes and Enums to simplify the usage.
 2. Install:
     - From PyPI: `pip install gp_wrapper` or `uv add gp_wrapper`
     - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, quickpub, …)
-    - Publish a new version: bump `VERSION` in `publish.py`, then `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+; needs `.pypirc`)
+    - Release (preferred): merge a PR to `main` with exactly one label — `bumpMajor` / `bumpMinor` / `bumpPatch` / `noBump`. CI runs pytest on Python 3.11–3.13; CD then creates a GitHub Release + wheel when bumping.
+    - Optional local PyPI publish: bump `VERSION` in `publish.py`, then `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+; needs `.pypirc`)
 3. See example [here](./READMES/example.md)
