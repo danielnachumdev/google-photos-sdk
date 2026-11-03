@@ -1,0 +1,25 @@
+# Keep runtime/dev deps and Actions pins current; Dependabot opens grouped PRs.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "noBump"
+    groups:
+      pip-production:
+        dependency-type: "production"
+      pip-development:
+        dependency-type: "development"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "noBump"
