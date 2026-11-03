@@ -1,13 +1,8 @@
 from datetime import datetime
 from typing import Optional
 import gp_wrapper
-from ..helpers import get_python_version
 from .parent_classes import Printable, Dictable
 from .enums import PositionType, StatusCode
-if get_python_version() < (3, 9):
-    from typing import List as t_list  # pylint:disable=ungrouped-imports
-else:
-    from builtins import list as t_list  # type:ignore
 Milliseconds = float
 Seconds = float
 MediaItemID = str
@@ -183,7 +178,7 @@ class Status(Dictable, Printable):
             details=dct["details"] if "details" in dct else None
         )
 
-    def __init__(self, message: str, code: Optional[StatusCode] = None, details: Optional[t_list[dict]] = None) -> None:
+    def __init__(self, message: str, code: Optional[StatusCode] = None, details: Optional[list[dict]] = None) -> None:
         self.__message = message
         self.__code = code
         self.__details = details

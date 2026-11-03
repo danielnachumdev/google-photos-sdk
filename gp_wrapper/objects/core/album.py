@@ -6,12 +6,7 @@ from .enrichment_item import CoreEnrichmentItem
 from ...utils import PositionType, EnrichmentType, RequestType, Printable, AlbumMaskType, HeaderType,\
     OnlyPrivate
 from ...utils import AlbumId, NextPageToken
-from ...utils import get_python_version
 from ...utils import ALBUMS_ENDPOINT
-if get_python_version() < (3, 9):
-    from typing import Tuple as t_tuple, Dict as t_dict  # pylint: disable=ungrouped-imports,redefined-builtin
-else:
-    from builtins import tuple as t_tuple, dict as t_dict  # type:ignore
 
 
 class CoreAlbum(Printable, OnlyPrivate):
@@ -83,7 +78,7 @@ class CoreAlbum(Printable, OnlyPrivate):
 
     def addEnrichment(self, enrichment_type: EnrichmentType, enrichment_data: dict,
                       album_position: PositionType, album_position_data: Optional[dict] = None)\
-            -> t_tuple[Optional[Response], Optional[CoreEnrichmentItem]]:
+            -> tuple[Optional[Response], Optional[CoreEnrichmentItem]]:
         """Adds an enrichment at a specified position in a defined album.
 
         Args:
@@ -97,7 +92,7 @@ class CoreAlbum(Printable, OnlyPrivate):
             EnrichmentItem: the item added
         """
         endpoint = f"https://photoslibrary.googleapis.com/v1/albums/{self.id}:addEnrichment"
-        body: t_dict[str, dict] = {
+        body: dict[str, dict] = {
             "newEnrichmentItem": {
                 enrichment_type.value: enrichment_data
             },
@@ -276,7 +271,7 @@ class CoreAlbum(Printable, OnlyPrivate):
         pageSize: int = 20,
         prevPageToken: Optional[NextPageToken] = None,
         excludeNonAppCreatedData: bool = False
-    ) -> t_tuple[Optional[Generator["CoreAlbum", None, None]], Optional[NextPageToken]]:
+    ) -> tuple[Optional[Generator["CoreAlbum", None, None]], Optional[NextPageToken]]:
         """Lists all albums shown to a user in the Albums tab of the Google Photos app.
 
         pageSize (int): Maximum number of albums to return in the response.

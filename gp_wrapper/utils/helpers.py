@@ -1,42 +1,23 @@
 import functools
 import time
 import platform
-from typing import Callable, TypeVar, Generator, Iterable, Any, ForwardRef
+from typing import Any, Callable, ForwardRef, Generator, Iterable, ParamSpec, TypeVar
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
-def _get_python_version_untyped() -> tuple:
-    values = (int(v) for v in platform.python_version().split("."))
-    try:
-        return tuple(values)  # type:ignore
-    except:
-        from builtins import tuple
-        return tuple(values)  # type:ignore
-
-
-if _get_python_version_untyped() < (3, 9):
-    from typing import Tuple as t_tuple, List as t_list
-else:
-    from builtins import tuple as t_tuple, list as t_list  # type:ignore
-
-
-def get_python_version() -> t_tuple[int, int, int]:
+def get_python_version() -> tuple[int, int, int]:
     """return the version of python that is currently running this code
 
     Returns:
         tuple[int, int, int]: version
     """
-    return _get_python_version_untyped()  # type:ignore
+    major, minor, patch, *_ = (int(v) for v in platform.python_version().split("."))
+    return major, minor, patch
 
 
-if get_python_version() < (3, 9):
-    from typing_extensions import ParamSpec
-else:
-    from typing import ParamSpec  # type:ignore #pylint: disable=ungrouped-imports
-P = ParamSpec("P")
-T = TypeVar("T")
-
-
-def split_iterable(iterable: Iterable[T], batch_size: int) -> Generator[t_list[T], None, None]:
+def split_iterable(iterable: Iterable[T], batch_size: int) -> Generator[list[T], None, None]:
     """will yield sub-iterables each the size of 'batch_size'
 
     Args:
@@ -46,7 +27,7 @@ def split_iterable(iterable: Iterable[T], batch_size: int) -> Generator[t_list[T
     Yields:
         Generator[list[T], None, None]: resulting value
     """
-    batch: t_list[T] = []
+    batch: list[T] = []
     for i, item in enumerate(iterable):
         if i % batch_size == 0:
             if len(batch) > 0:
@@ -119,7 +100,7 @@ def memo(func):
     return wrapper
 
 
-def batchify(objects: Iterable[T], batch_max_size: int) -> t_list[t_list[T]]:
+def batchify(objects: Iterable[T], batch_max_size: int) -> list[list[T]]:
     """split an iterable of objects into natches of these objects"""
     batches = []
     batch = []

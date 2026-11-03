@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,11 +16,14 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: Unix",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
 ]
-requires-python = ">=3.8.0"
+requires-python = ">=3.11"
 # Runtime / publish deps. Install with: uv sync
 # moviepy 2.x removed moviepy.editor, which gp_wrapper still imports.
 dependencies = [
@@ -28,13 +31,13 @@ dependencies = [
     "google-auth-httplib2",
     "google-auth-oauthlib",
     "moviepy>=1.0.3,<2",
-    "requests",
+    "requests>=2.33.0",
     "tqdm",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
+    "pytest>=9.0.3",
     "pytest-cov>=4.0",
 ]
 
@@ -47,8 +50,8 @@ Homepage = "https://github.com/danielnachumdev/gp_wrapper"
 [dependency-groups]
 dev = [
     "mypy",
-    "pylint",
-    "pytest>=7.0",
+    "pylint>=4.0.9",
+    "pytest>=9.0.3",
     "pytest-cov>=4.0",
     "pytest-xdist",
     "quickpub>=4.1.3",
@@ -66,8 +69,17 @@ exclude = ["tests*", "archive*"]
 # default-groups = [] so `uv sync` is runtime/publish only.
 [tool.uv]
 default-groups = []
+# Security floors for Dependabot findings (transitive + direct).
 constraint-dependencies = [
     "moviepy>=1.0.3,<2",
+    "certifi>=2026.10.18",
+    "cryptography>=50.0.0",
+    "oauthlib>=4.0.0",
+    "pillow>=13.0.0",
+    "pyasn1>=0.6.5",
+    "pygments>=2.20.0",
+    "setuptools>=84.1.0",
+    "urllib3>=2.8.0",
 ]
 
 [tool.pytest.ini_options]

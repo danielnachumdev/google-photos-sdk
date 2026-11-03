@@ -10,11 +10,7 @@ from gp_wrapper.objects.core.media_item.filters import SearchFilter
 from gp_wrapper.utils import AlbumId, AlbumPosition, MediaItemResult, NewMediaItem, NextPageToken, Path
 from .core import GooglePhotos, CoreMediaItem, MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE,\
     MEDIA_ITEM_LIST_MAXIMUM_PAGE_SIZE, MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS
-from ..utils import MediaItemMaskTypes, NewMediaItem, SimpleMediaItem, get_python_version
-if get_python_version() < (3, 9):
-    from typing import List as t_list, Tuple as t_tuple  # pylint: disable=ungrouped-imports,redefined-builtin
-else:
-    from builtins import list as t_list, tuple as t_tuple  # type:ignore
+from ..utils import MediaItemMaskTypes, NewMediaItem, SimpleMediaItem
 
 
 class MediaItem(CoreMediaItem):
@@ -137,20 +133,20 @@ class MediaItem(CoreMediaItem):
             yield from lst
 
     @staticmethod
-    def add_to_library(gp: GooglePhotos, paths: Iterable[Path]) -> t_list[Optional["MediaItem"]]:
+    def add_to_library(gp: GooglePhotos, paths: Iterable[Path]) -> list[Optional["MediaItem"]]:
         """a higher order function to add media to the library without needing to use lower-end API functions
 
         Returns:
             list[Optional[MediaItem]]: list of resulting objects for further use
         """
-        items: t_list[NewMediaItem] = []
+        items: list[NewMediaItem] = []
         for path in paths:
             token = MediaItem.upload_media(gp, path)
             filename = pathlib.Path(path).stem
             item = NewMediaItem("", SimpleMediaItem(token, filename))
             items.append(item)
-        batches: t_list[t_list[NewMediaItem]] = []
-        batch: t_list[NewMediaItem] = []
+        batches: list[list[NewMediaItem]] = []
+        batch: list[NewMediaItem] = []
         for item in items:
             if len(batch) >= MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS:
                 batches.append(batch)
@@ -170,7 +166,7 @@ class MediaItem(CoreMediaItem):
         newMediaItems: Iterable[NewMediaItem],
         albumId: Optional[AlbumId] = None,
         albumPosition: Optional[AlbumPosition] = None
-    ) -> t_list[MediaItemResult]:
+    ) -> list[MediaItemResult]:
         return CoreMediaItem.batchCreate(gp, newMediaItems, albumId, albumPosition)
     # ================================= OVERRIDDEN INSTANCE METHODS =================================
 
@@ -179,7 +175,7 @@ class MediaItem(CoreMediaItem):
         gp: GooglePhotos,
         pageSize: int = MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE,
         pageToken: Optional[str] = None
-    ) -> t_tuple[t_list["MediaItem"], Optional[NextPageToken]]:
+    ) -> tuple[list["MediaItem"], Optional[NextPageToken]]:
         lst, token = CoreMediaItem.list(gp, pageSize, pageToken)
         return [MediaItem._from_core(o) for o in lst], token
     # ================================= ADDITIONAL INSTANCE METHODS =================================

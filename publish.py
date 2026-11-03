@@ -36,7 +36,7 @@ def main() -> None:
         homepage="https://github.com/danielnachumdev/gp_wrapper",
         explicit_src_folder_path="./gp_wrapper",
         license_file_path="./LISENCE",
-        min_python="3.8.0",
+        min_python="3.11",
         keywords=["functions", "methods", "classes", "API"],
         enforcers=[
             PypircEnforcer(),

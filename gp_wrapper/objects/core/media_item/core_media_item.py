@@ -9,12 +9,8 @@ from ....utils import MediaItemMaskTypes, RequestType, AlbumPosition, NewMediaIt
     MediaItemResult, MediaMetadata, Printable, HeaderType, ProgressBar, ContributorInfo, OnlyPrivate, MimeType
 from ....utils import MediaItemID, AlbumId, Path, NextPageToken, UploadToken
 from ....utils import UPLOAD_MEDIA_ITEM_ENDPOINT, MEDIA_ITEMS_CREATE_ENDPOINT
-from ....utils import slowdown, get_python_version, FileTime, FileTimeService
+from ....utils import slowdown, FileTime, FileTimeService
 from ....utils import embed_mp4_creation_time
-if get_python_version() < (3, 9):
-    from typing import List as t_list, Tuple as t_tuple, Dict as t_dict  # pylint: disable=ungrouped-imports,redefined-builtin
-else:
-    from builtins import list as t_list, tuple as t_tuple, dict as t_dict  # type:ignore
 
 MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE: int = 25
 MEDIA_ITEM_LIST_MAXIMUM_PAGE_SIZE: int = 100
@@ -130,7 +126,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
     def batchCreate(
             gp: GooglePhotos, newMediaItems: Iterable[NewMediaItem], albumId: Optional[AlbumId] = None,
         albumPosition: Optional[AlbumPosition] = None) \
-            -> t_list[MediaItemResult]:
+            -> list[MediaItemResult]:
         """Creates one or more media items in a user's Google Photos library.
             This is the second step for creating a media item.\n
             For details regarding Step 1, uploading the raw bytes to a Google Server, see GPMediaItem.upload_media\n
@@ -168,7 +164,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
         if not (0 <= len(list(newMediaItems)) <= MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS):  # pylint: disable=unneeded-not,superfluous-parens
             raise ValueError(
                 f"'newMediaItems' can only hold a maximum of {MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS} items per call")
-        body: t_dict[str, Union[str, list, dict]] = {
+        body: dict[str, Union[str, list, dict]] = {
             # see https://developers.google.com/photos/library/reference/rest/v1/mediaItems/batchCreate
             "newMediaItems": [item.to_dict() for item in newMediaItems]
         }
@@ -252,7 +248,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
             pageToken: Optional[str] = None,
             filters: Optional[SearchFilter] = None,
             orderBy: Optional[str] = None
-    ) -> t_tuple[Generator["CoreMediaItem", None, None], Optional[NextPageToken]]:
+    ) -> tuple[Generator["CoreMediaItem", None, None], Optional[NextPageToken]]:
         """Searches for media items in a user's Google Photos library. 
         If no filters are set, then all media items in the user's library are returned. 
         If an album is set, all media items in the specified album are returned. 
@@ -341,7 +337,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
 
     @staticmethod
     def list(gp: GooglePhotos, pageSize: int = MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE,
-             pageToken: Optional[str] = None) -> t_tuple[t_list["CoreMediaItem"], Optional[NextPageToken]]:
+             pageToken: Optional[str] = None) -> tuple[list["CoreMediaItem"], Optional[NextPageToken]]:
         """List all media items from a user's Google Photos library.
 
         Args:
