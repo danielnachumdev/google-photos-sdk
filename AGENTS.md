@@ -17,9 +17,8 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 
 ```text
 .
-├── .github/             # CODEOWNERS, dependabot.yml, workflows/
+├── .github/             # CODEOWNERS, dependabot.yml, thin CI/CD orchestrators
 ├── gp_wrapper/          # Importable package
-├── scripts/release/     # CD: release_semver.py + build_release_wheel.sh
 ├── tests/
 ├── pyproject.toml
 ├── uv.lock
@@ -28,6 +27,8 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 ├── LISENCE              # MIT (filename spelling is historical)
 └── READMES/             # Examples + client_secrets shape
 ```
+
+Shared CI/CD: [`danielnachumdev/actions`](https://github.com/danielnachumdev/actions) (`@v1`). How to adopt: [`HOW-TO-USE.md`](https://github.com/danielnachumdev/actions/blob/v1/HOW-TO-USE.md).
 
 ---
 
@@ -73,13 +74,12 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 ## PRs, CI, and releases
 
 1. Branch off `main`; open a PR into `main`.
-2. Attach **exactly one** release label: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`.
-3. **CI** (`.github/workflows/ci.yml`): pytest on Python 3.11–3.13; aggregate check name **`CI`**.
-4. After CI succeeds on a push to `main`, **CD** (`.github/workflows/cd.yml`) reads the merged PR’s label:
-   - bump → stamp version, `uv build` wheel, create GitHub Release + attach `.whl`
-   - `noBump` → succeed without a Release
-5. Version **source of truth** is GitHub Release tags (not bot-committed bumps). If no Release exists yet, CD seeds from `pyproject.toml`.
-6. Dependabot PRs should stay on `noBump` (configured in `.github/dependabot.yml`).
+2. Attach **exactly one** semver label: `noBump` | `bumpPatch` | `bumpMinor` | `bumpMajor`.
+3. **CI** — `…/ci.yml@v1` (tests) + `…/semver-ci.yml@v1` (validate label). Prefer **`CI / CI`** and **`Semver / Semver`**.
+4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release → floating `vMAJOR` (or skip on `noBump`).
+5. Version **source of truth** is GitHub Release tags. If none yet, CD seeds from `pyproject.toml`.
+6. Dependabot PRs stay on `noBump`.
+7. Change shared CI/semver behavior in **`danielnachumdev/actions`**, not by re-vendoring here.
 
 Optional local PyPI publish (not the default ship path):
 
@@ -93,8 +93,8 @@ Needs `.pypirc`. License path is `./LISENCE`.
 ### Repo gates (already configured)
 
 - `.github/CODEOWNERS` — `@danielnachumdev`
-- Branch protection / ruleset: required **`CI`** + **`Release label`**; code-owner reviews; no force-push to `main`
-- Private vulnerability reporting via GitHub Security Advisories (no separate `SECURITY.md`)
+- Branch protection / ruleset: required **`CI / CI`** + **`Semver / Semver`**; code-owner reviews; no force-push to `main`
+- Private vulnerability reporting via GitHub Security Advisories
 
 ---
 

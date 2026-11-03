@@ -1,13 +1,15 @@
 name: CI
 
-# Validation only — never creates tags / Releases / wheels.
-# Semver / Release publish is CD (cd.yml), gated on this workflow succeeding.
+# Thin orchestrator — danielnachumdev/actions@v1
+# Prefer requiring "CI / CI" and "Semver / Semver".
+# Semver at CI: exactly one of noBump | bumpPatch | bumpMinor | bumpMajor
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 concurrency:
@@ -16,41 +18,16 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
-  test:
-    name: Tests (Py ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.0.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install package + test deps
-        run: uv sync --group dev
-      - name: Pytest
-        run: uv run pytest -q
-
-  # Always-green aggregate so branch protection can require check name "CI".
   ci:
     name: CI
-    needs: [test]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Require test matrix success
-        run: |
-          set -euo pipefail
-          result="${{ needs.test.result }}"
-          echo "test matrix: ${result}"
-          if [[ "${result}" != "success" ]]; then
-            echo "FAIL Tests: ${result}"
-            exit 1
-          fi
-          echo "OK CI"
+    uses: danielnachumdev/actions/.github/workflows/ci.yml@v1
+
+  semver:
+    name: Semver
+    if: github.event_name == 'pull_request'
+    uses: danielnachumdev/actions/.github/workflows/semver-ci.yml@v1
+    with:
+      standards-ref: v1
