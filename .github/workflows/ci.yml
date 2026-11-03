@@ -1,6 +1,6 @@
 name: CI
 
-# Thin orchestrator — danielnachumdev/actions@v1
+# Thin orchestrator — danielnachumdev/actions@v1.2.0
 # Prefer requiring "CI / CI" and "Semver / Semver".
 # Semver at CI: exactly one of noBump | bumpPatch | bumpMinor | bumpMajor
 
@@ -23,11 +23,11 @@ permissions:
 jobs:
   ci:
     name: CI
-    uses: danielnachumdev/actions/.github/workflows/ci.yml@v1
+    uses: danielnachumdev/actions/.github/workflows/ci.yml@v1.2.0
 
   semver:
     name: Semver
     if: github.event_name == 'pull_request'
-    uses: danielnachumdev/actions/.github/workflows/semver-ci.yml@v1
+    uses: danielnachumdev/actions/.github/workflows/semver-ci.yml@v1.2.0
     with:
-      standards-ref: v1
+      standards-ref: v1.2.0
