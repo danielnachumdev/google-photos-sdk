@@ -28,7 +28,7 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 └── READMES/             # Examples + client_secrets shape
 ```
 
-Shared CI/CD implementation: [`danielnachumdev/actions`](https://github.com/danielnachumdev/actions) (`@v1`). Playbook: [`PLAYBOOK.md`](https://github.com/danielnachumdev/actions/blob/v1/PLAYBOOK.md).
+Shared CI/CD: [`danielnachumdev/actions`](https://github.com/danielnachumdev/actions) (`@v1`). How to adopt: [`HOW-TO-USE.md`](https://github.com/danielnachumdev/actions/blob/v1/HOW-TO-USE.md).
 
 ---
 
