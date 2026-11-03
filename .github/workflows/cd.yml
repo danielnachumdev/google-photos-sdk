@@ -1,8 +1,10 @@
 name: CD
 
 # Label gate on PRs; semver GitHub Release after successful CI on main.
-# Shared logic: danielnachumdev/actions@v1
+#   label:  …/label.yml@v1
+#   semver: …/semver.yml@v1
 # Labels (exactly one): bumpMajor | bumpMinor | bumpPatch | noBump
+# Prefer requiring checks "Label / Label" and "CI / CI".
 
 on:
   workflow_run:
@@ -32,22 +34,22 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check-label:
-    name: Release label
+  label:
+    name: Label
     if: github.event_name == 'pull_request'
-    uses: danielnachumdev/actions/.github/workflows/reusable-release-label.yml@v1
+    uses: danielnachumdev/actions/.github/workflows/label.yml@v1
     with:
       standards-ref: v1
 
   semver:
-    name: semver
+    name: Semver
     if: >
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_branch == 'main') ||
       github.event_name == 'workflow_dispatch'
-    uses: danielnachumdev/actions/.github/workflows/reusable-semver-github-release.yml@v1
+    uses: danielnachumdev/actions/.github/workflows/semver.yml@v1
     with:
       standards-ref: v1
       dry-run: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true' }}
