@@ -1,73 +1,103 @@
 # GP Wrapper – Agent Context
 
-## Project overview
+Implementation guide for coding agents changing **gp_wrapper**. Product pitch and user-facing install: [`README.md`](README.md).
 
-**gp_wrapper** is a Python package wrapping the **Google Photos Library API**. Managed with **uv** + a single `pyproject.toml` (metadata, runtime deps, dev group, mypy, pylint, pytest/coverage). Do not commit `client_secrets.json` or other secrets.
+---
 
-## Repository structure
+## Orientation
 
-```
+| Question | Answer |
+| -------- | ------ |
+| What is this? | Python package wrapping the **Google Photos Library API** |
+| Importable code | `gp_wrapper/` |
+| Toolchain | [uv](https://docs.astral.sh/uv/) + `pyproject.toml` / `uv.lock` |
+| Python | `>=3.11` (CI matrix **3.11, 3.12, 3.13**) |
+| Tests | `tests/` — pytest + coverage (≥95%); **never delete** |
+| Secrets | Never commit `client_secrets.json`, `.pypirc`, API keys |
+
+```text
 .
 ├── .github/             # CODEOWNERS, dependabot.yml, workflows/
-├── .github/workflows/   # CI (Py 3.11–3.13) + CD (label-driven semver Release)
-├── SECURITY.md          # Private vulnerability reporting policy
 ├── gp_wrapper/          # Importable package
-├── scripts/release/     # release_semver.py + build_release_wheel.sh (CD)
-├── tests/               # pytest suite (do not delete)
-├── pyproject.toml       # uv project: runtime + [dependency-groups] dev + tool config
-├── uv.lock              # Lockfile (track in git)
-├── publish.py           # optional local quickpub publish (PyPI); CD owns GitHub Releases
-├── README.md
+├── scripts/release/     # CD: release_semver.py + build_release_wheel.sh
+├── tests/
+├── pyproject.toml
+├── uv.lock
+├── publish.py           # Optional local quickpub → PyPI; CD owns GitHub Releases
+├── README.md            # Marketing / user docs
 ├── LISENCE              # MIT (filename spelling is historical)
-├── client_secrets.json  # Do not commit
-├── data/
-├── dist/                # Build artifacts (gitignored)
-└── reports/             # pylint/mypy/pytest output (gitignored *.txt)
+└── READMES/             # Examples + client_secrets shape
 ```
 
-## Tech stack
+---
 
-- **Python** `>=3.11` (raised for Dependabot-fixed deps such as Pillow 13)
-- **Toolchain:** [uv](https://docs.astral.sh/uv/) + `pyproject.toml` / `uv.lock`
-- **Runtime / publish:** `[project].dependencies` — `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`, `requests`, `tqdm`, `moviepy>=1.0.3,<2`
-- **Dev:** `[dependency-groups].dev` — mypy, pylint, pytest, pytest-cov, pytest-xdist, `quickpub>=4.1.3`, `types-requests`, `types-tqdm` (no duplicated runtime deps)
-- **Lock constraint:** `tool.uv.constraint-dependencies` also pins `moviepy>=1.0.3,<2` (`moviepy.editor` was removed in moviepy 2.x). Do not rewrite the moviepy API here.
-- **Config:** `[tool.mypy]`, `[tool.pylint.*]`, `[tool.pytest.ini_options]`, `[tool.coverage.*]` all live in `pyproject.toml`
+## Develop
 
-## Setup
-
-From this project root:
-
-```powershell
-uv sync                 # runtime / publish only → .venv
-uv sync --group dev     # also mypy, pylint, twine, pytest, typing stubs
+```bash
+uv sync                 # runtime only → .venv
+uv sync --group dev     # + mypy, pylint, pytest, quickpub, stubs
 # or: uv sync --all-groups
 ```
 
-`tool.uv.default-groups` is empty so `uv sync` does **not** install the `dev` group by default.
+`tool.uv.default-groups` is empty — `uv sync` does **not** install `dev` by default.
 
-## Running / entry points
+| Task | Command |
+| ---- | ------- |
+| Import smoke | `uv run python -c "import gp_wrapper"` |
+| Tests | `uv run pytest` |
+| Types | `uv run mypy` |
+| Lint | `uv run pylint gp_wrapper` |
 
-- Import: `uv run python -c "import gp_wrapper"`
-- Tests: `uv run pytest` (after `uv sync --group dev`)
-- Typecheck / lint: `uv run mypy` / `uv run pylint gp_wrapper` (config from pyproject)
-- **CI:** `.github/workflows/ci.yml` — pytest on Python **3.11, 3.12, 3.13**; aggregate check name `CI`.
-- **CD / Release:** `.github/workflows/cd.yml` — after successful CI on `main`, label-driven semver GitHub Release + wheel. Every PR into `main` needs **exactly one** of: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`. Source of truth is Release tags (not committed version bumps). If no Release exists yet, CD seeds from `pyproject.toml` version.
-- Optional local PyPI publish: `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+). Set `demo=True` to run QA only. Needs `.pypirc`. License path is `./LISENCE`.
+Config for mypy / pylint / pytest / coverage lives in `pyproject.toml`.
 
-File timestamps: use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`, private `_stat` / `_apply_utime` / … — portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created). `CoreMediaItem.upload_media` copies those onto transcoded non-mp4 videos after reading bytes (so Windows atime is not clobbered by the upload open). Before reading upload bytes, it also embeds MP4 `creation_time` from the source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) — Google Photos dates videos from container metadata, not FileTime. Transcode runs whether or not `pbar` is passed (nachum_migrator does not pass one).
+### Dependencies
 
-## Tests
+- **Runtime:** `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`, `requests`, `tqdm`, `moviepy>=1.0.3,<2`
+- **Dev group:** mypy, pylint, pytest, pytest-cov, pytest-xdist, `quickpub>=4.1.3`, `types-requests`, `types-tqdm`
+- **Constraint:** keep `moviepy>=1.0.3,<2` (`moviepy.editor` was removed in 2.x — do not rewrite the moviepy API here)
+- Security floors for Dependabot-fixed transitive deps are in `[tool.uv] constraint-dependencies`
 
-`tests/` is a pytest + pytest-cov suite targeting ≥95% coverage. Never delete `tests/`. Coverage config is in `pyproject.toml`.
+Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv sync --group dev`.
 
-## Security / repo hygiene
+---
 
-- **CODEOWNERS:** `.github/CODEOWNERS` — `@danielnachumdev` owns all paths (branch protection can require code-owner review).
-- **Dependabot:** `.github/dependabot.yml` — weekly `pip` + `github-actions` update PRs (labeled `noBump`).
-- **Advisories:** `SECURITY.md` + GitHub private vulnerability reporting.
-- **CD gate:** every PR into `main` needs exactly one of `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump` (ruleset / “Release label” check).
+## Code style & domain notes
 
-## Sensitive / ignored files
+- Follow the writing-python skill when adding/refactoring modules (class-first, SRP files, no stub shims).
+- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). Keep `__version__` aligned with packaging when stamping releases (CD does this in the ephemeral wheel build).
+- **File timestamps:** use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`; portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created).
+- **`CoreMediaItem.upload_media`:** copies FileTimes onto transcoded non-mp4 videos after reading bytes; embeds MP4 `creation_time` from source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) before upload bytes are read (Google Photos dates videos from container metadata). Transcode runs whether or not `pbar` is passed.
+
+---
+
+## PRs, CI, and releases
+
+1. Branch off `main`; open a PR into `main`.
+2. Attach **exactly one** release label: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`.
+3. **CI** (`.github/workflows/ci.yml`): pytest on Python 3.11–3.13; aggregate check name **`CI`**.
+4. After CI succeeds on a push to `main`, **CD** (`.github/workflows/cd.yml`) reads the merged PR’s label:
+   - bump → stamp version, `uv build` wheel, create GitHub Release + attach `.whl`
+   - `noBump` → succeed without a Release
+5. Version **source of truth** is GitHub Release tags (not bot-committed bumps). If no Release exists yet, CD seeds from `pyproject.toml`.
+6. Dependabot PRs should stay on `noBump` (configured in `.github/dependabot.yml`).
+
+Optional local PyPI publish (not the default ship path):
+
+```bash
+# bump VERSION in publish.py if needed; demo=True → QA only
+uv run --all-groups python publish.py
+```
+
+Needs `.pypirc`. License path is `./LISENCE`.
+
+### Repo gates (already configured)
+
+- `.github/CODEOWNERS` — `@danielnachumdev`
+- Branch protection / ruleset: required **`CI`** + **`Release label`**; code-owner reviews; no force-push to `main`
+- Private vulnerability reporting via GitHub Security Advisories (no separate `SECURITY.md`)
+
+---
+
+## Sensitive / ignored
 
 Do not commit: `client_secrets.json`, `.pypirc`, `.venv/`, `venv/`, `dist/`, `__pycache__/`, API keys. Track `uv.lock`. Respect `.gitignore`.

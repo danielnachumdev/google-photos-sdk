@@ -1,33 +1,65 @@
-# gp_wrapper v=0.9.12
-A Google Photos API wrapper library
+# gp_wrapper
 
-Requires **Python >= 3.11**.
+**Typed Python wrapper for the Google Photos Library API** — albums, media, uploads, and search with a clean object model instead of raw HTTP.
 
-* Official API is already supported
+[![CI](https://github.com/danielnachumdev/gp_wrapper/actions/workflows/ci.yml/badge.svg)](https://github.com/danielnachumdev/gp_wrapper/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/gp_wrapper.svg)](https://pypi.org/project/gp_wrapper/)
+[![Python](https://img.shields.io/pypi/pyversions/gp_wrapper.svg)](https://pypi.org/project/gp_wrapper/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LISENCE)
 
-## What does this package offer?
-Support for all of the official API and more convenience function as well.
-A-lot of well defined API inspired Classes and Enums to simplify the usage.
-* `GooglePhotos` class - wrapper over authenticated HTTP session
-* `Album` Class - handles all of the global and instance methods for an Album
-* `MediaItem` Class - handles all of the global and instance methods for MediaItem
-* Enums: `RequestType`, `HeaderType`, `MimeType`, `PositionType`, `EnrichmentType`, `MediaItemMaskTypes`, `AlbumMaskType`, `RelativeItemType`, `StatusCode`
-* Classes: `SimpleMediaItem`, `NewMediaItem`, `AlbumPosition`, `Status`, `MediaItemResult`, `MediaMetadata`, `ContributorInfo`
-## Quick Start
-1. Create a [Google Cloud Console](https://console.cloud.google.com/) project
-2. Enable google photos API [here](https://console.cloud.google.com/apis/library/photoslibrary.googleapis.com)
-3. Fill information [here](https://console.cloud.google.com/apis/credentials/consent)
-    1.  Fill application name and detail
-    2. Apply scopes
-        1. https://www.googleapis.com/auth/photoslibrary,
-        2. https://www.googleapis.com/auth/photoslibrary.appendonly
-        3. https://www.googleapis.com/auth/photoslibrary.sharing
-        4. https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata
-    3. Add a google account as a Test User which will be able to use you project as an 'end user'
-3. Extract relevant data for [`client_secrets.json`](./READMES/client_secrets_example.json)
-2. Install:
-    - From PyPI: `pip install gp_wrapper` or `uv add gp_wrapper`
-    - Local development (this repo): `uv sync` (runtime) or `uv sync --group dev` (mypy, pylint, pytest, quickpub, …)
-    - Release (preferred): merge a PR to `main` with exactly one label — `bumpMajor` / `bumpMinor` / `bumpPatch` / `noBump`. CI runs pytest on Python 3.11–3.13; CD then creates a GitHub Release + wheel when bumping.
-    - Optional local PyPI publish: bump `VERSION` in `publish.py`, then `uv run --all-groups python publish.py` ([quickpub](https://pypi.org/project/quickpub/) 4.1.3+; needs `.pypirc`)
-3. See example [here](./READMES/example.md)
+Requires **Python 3.11+**.
+
+## Why gp_wrapper?
+
+Google Photos is powerful; its API is verbose. **gp_wrapper** turns authenticated sessions into first-class objects so you can script backups, migrations, and album workflows without hand-rolling OAuth, paging, or payload shapes.
+
+- **Full Library API coverage** plus convenience helpers for real upload/migration flows
+- **`GooglePhotos`**, **`Album`**, and **`MediaItem`** as the main entry points
+- **Enums and dataclasses** that mirror the API (`MimeType`, `MediaItemMaskTypes`, `NewMediaItem`, …)
+- **Video-aware uploads** — non-mp4 sources can be transcoded with preserved timing metadata
+- **MIT licensed**, CI-tested on Python **3.11–3.13**
+
+## Install
+
+```bash
+pip install gp_wrapper
+# or
+uv add gp_wrapper
+```
+
+## Quick start
+
+```python
+from gp_wrapper import GooglePhotos, Album, MediaItem, NewMediaItem, SimpleMediaItem
+
+gp = GooglePhotos("path/to/client_secrets.json")
+album = Album.exists(gp, name="Vacation") or Album.create(gp, "Vacation")
+token = MediaItem.upload_media(gp, "photo.jpg")
+MediaItem.batchCreate(
+    gp,
+    [NewMediaItem("from gp_wrapper", SimpleMediaItem(token, "photo.jpg"))],
+    albumId=album.id,
+)
+```
+
+Google Cloud OAuth setup and a longer walkthrough: [`READMES/example.md`](./READMES/example.md) · credentials shape: [`READMES/client_secrets_example.json`](./READMES/client_secrets_example.json)
+
+## What you get
+
+| Surface | Role |
+| -------- | ---- |
+| `GooglePhotos` | Authenticated session over the Photos Library API |
+| `Album` | Create, list, share, enrich, and manage album membership |
+| `MediaItem` | Upload, batch-create, search, and update media |
+| Filters & enums | Content, date, feature, and media-type search filters |
+| Structures | `SimpleMediaItem`, `NewMediaItem`, `AlbumPosition`, `MediaMetadata`, … |
+
+## Contributing & development
+
+Agent/developer workflow (uv, tests, CI/CD labels, secrets): see [`AGENTS.md`](./AGENTS.md).
+
+Report security issues privately via [GitHub advisories](https://github.com/danielnachumdev/gp_wrapper/security/advisories/new) — please do not open a public issue for vulnerabilities.
+
+## License
+
+MIT — see [`LISENCE`](./LISENCE).
