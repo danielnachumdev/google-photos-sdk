@@ -45,6 +45,8 @@ jobs:
       dry-run: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true' }}
       sha: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || (github.event.inputs.sha != '' && github.event.inputs.sha || github.sha) }}
       publish-pypi: true
+      pypi-auth: trusted-publishing
     # User-owned repo: map by name (secrets: inherit is org/enterprise only).
+    # PYPI_API_TOKEN unused with trusted-publishing; still mapped (empty OK).
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
