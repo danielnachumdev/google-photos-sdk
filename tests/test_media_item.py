@@ -9,13 +9,13 @@ from unittest.mock import MagicMock
 import pytest
 from requests import HTTPError
 
-from gp_wrapper.objects.MediaItem import MediaItem
-from gp_wrapper.objects.core.media_item.core_media_item import (
+from gpsdk.objects.MediaItem import MediaItem
+from gpsdk.objects.core.media_item.core_media_item import (
     MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS,
     MEDIA_ITEM_LIST_MAXIMUM_PAGE_SIZE,
     CoreMediaItem,
 )
-from gp_wrapper.objects.core.media_item.filters import (
+from gpsdk.objects.core.media_item.filters import (
     ContentCategory,
     ContentFilter,
     Date,
@@ -26,14 +26,14 @@ from gp_wrapper.objects.core.media_item.filters import (
     MediaTypeFilter,
     SearchFilter,
 )
-from gp_wrapper.utils.structures.data_types import (
+from gpsdk.utils.structures.data_types import (
     AlbumPosition,
     MediaMetadata,
     NewMediaItem,
     SimpleMediaItem,
 )
-from gp_wrapper.utils.file_time import FileTime
-from gp_wrapper.utils.structures.enums import MediaItemMaskTypes, PositionType
+from gpsdk.utils.file_time import FileTime
+from gpsdk.utils.structures.enums import MediaItemMaskTypes, PositionType
 
 from .conftest import (
     DummyProgressBar,
@@ -127,7 +127,7 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
 
     mock_clip.write_videofile.side_effect = fake_write
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        "gpsdk.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
     access = datetime(2015, 6, 15, 10, 0, 0)
@@ -136,17 +136,17 @@ def test_upload_media_mov_converts_with_pbar(gp, tmp_path, monkeypatch: pytest.M
     captured: dict = {}
     embed_calls: list = []
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.get",
+        "gpsdk.objects.core.media_item.core_media_item.FileTimeService.get",
         lambda self, path, follow_symlinks=True: FileTime(
             creation=creation, access=access, modification=modification
         ),
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.FileTimeService.set",
+        "gpsdk.objects.core.media_item.core_media_item.FileTimeService.set",
         lambda self, path, ft, follow_symlinks=True: captured.update(path=path, ft=ft),
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        "gpsdk.objects.core.media_item.core_media_item.embed_mp4_creation_time",
         lambda path, stamp: embed_calls.append((path, stamp)) or True,
     )
     gp.session.post.return_value = make_response(content=b"tok-mov")
@@ -179,11 +179,11 @@ def test_upload_media_mov_copies_atime_mtime_to_converted_file(
 
     mock_clip.write_videofile.side_effect = fake_write
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        "gpsdk.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        "gpsdk.objects.core.media_item.core_media_item.embed_mp4_creation_time",
         lambda path, stamp: True,
     )
     gp.session.post.return_value = make_response(content=b"tok-dated")
@@ -211,12 +211,12 @@ def test_upload_media_mov_converts_without_pbar(
 
     mock_clip.write_videofile.side_effect = fake_write
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        "gpsdk.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
     embed_calls: list = []
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.embed_mp4_creation_time",
+        "gpsdk.objects.core.media_item.core_media_item.embed_mp4_creation_time",
         lambda path, stamp: embed_calls.append((path, stamp)) or True,
     )
     gp.session.post.return_value = make_response(content=b"tok-no-pbar")
@@ -268,7 +268,7 @@ def test_upload_media_transcode_embeds_creation_time_before_upload_bytes(
 
     mock_clip.write_videofile.side_effect = fake_write
     monkeypatch.setattr(
-        "gp_wrapper.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
+        "gpsdk.objects.core.media_item.core_media_item.moviepy.VideoFileClip",
         lambda path: mock_clip,
     )
     uploaded: dict = {}

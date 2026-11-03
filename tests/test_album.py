@@ -4,12 +4,12 @@ from __future__ import annotations
 import pytest
 from requests import HTTPError
 
-from gp_wrapper.objects.Album import Album
-from gp_wrapper.objects.MediaItem import MediaItem
-from gp_wrapper.objects.core.album import CoreAlbum
-from gp_wrapper.objects.core.enrichment_item import CoreEnrichmentItem
-from gp_wrapper.utils.structures.data_types import MediaItemResult
-from gp_wrapper.utils.structures.enums import AlbumMaskType, EnrichmentType, PositionType
+from gpsdk.objects.Album import Album
+from gpsdk.objects.MediaItem import MediaItem
+from gpsdk.objects.core.album import CoreAlbum
+from gpsdk.objects.core.enrichment_item import CoreEnrichmentItem
+from gpsdk.utils.structures.data_types import MediaItemResult
+from gpsdk.utils.structures.enums import AlbumMaskType, EnrichmentType, PositionType
 
 from .conftest import ALBUM_DICT, ALBUM_DICT_MINIMAL, MEDIA_ITEM_DICT, make_response
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gp_wrapper.utils.file_time import FileTime, FileTimeService
+from gpsdk.utils.file_time import FileTime, FileTimeService
 
 
 @pytest.fixture
@@ -174,7 +174,7 @@ def test_utime_follow_symlinks_notimplemented_fallback(
     assert any("follow_symlinks" not in c for c in calls)
 
 
-def test_import_gp_wrapper_does_not_require_win32_ctypes() -> None:
-    import gp_wrapper
+def test_import_gpsdk_does_not_require_win32_ctypes() -> None:
+    import gpsdk
 
-    assert gp_wrapper.MediaItem is not None
+    assert gpsdk.MediaItem is not None

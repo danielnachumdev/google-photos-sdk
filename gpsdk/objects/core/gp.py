@@ -4,7 +4,7 @@ import requests
 from requests import Response
 from google.oauth2.credentials import Credentials  # type:ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type:ignore
-import gp_wrapper.objects.core.media_item
+import gpsdk.objects.core.media_item
 from ...utils import RequestType, Printable, HeaderType, ProgressBarInjector, ProgressBar, OnlyPrivate
 from ...utils import EMPTY_PROMPT_MESSAGE, SCOPES, MEDIA_ITEMS_CREATE_ENDPOINT
 
@@ -64,7 +64,7 @@ class GooglePhotos(Printable, OnlyPrivate):
         }
         return request_map[req_type](url=endpoint, headers=headers, **kwargs)
 
-    def _get_media_item_id(self, upload_token: str) -> "gp_wrapper.objects.core.media_item.CoreMediaItem":
+    def _get_media_item_id(self, upload_token: str) -> "gpsdk.objects.core.media_item.CoreMediaItem":
         payload = {
             "newMediaItems": [
                 {
@@ -83,7 +83,7 @@ class GooglePhotos(Printable, OnlyPrivate):
         j = response.json()
         if "newMediaItemResults" in j:
             dct = j['newMediaItemResults'][0]['mediaItem']
-            return gp_wrapper.objects.core.media_item.CoreMediaItem._from_dict(self, dct)  # pylint: disable=protected-access #noqa
+            return gpsdk.objects.core.media_item.CoreMediaItem._from_dict(self, dct)  # pylint: disable=protected-access #noqa
         # TODO fix this
         print(json.dumps(j, indent=4))
         raise AttributeError("'newMediaItemResults' not found in response")

@@ -48,7 +48,7 @@ def json_default(obj: Any) -> str:
     """
     if hasattr(obj, "__json__"):
         return getattr(obj, "__json__")()
-    if hasattr(obj, "__dict__") and obj.__module__.split(".")[0] == "gp_wrapper":
+    if hasattr(obj, "__dict__") and obj.__module__.split(".")[0] == "gpsdk":
         # json.dumps(obj.__dict__, indent=4, default=json_default)
         return str(obj)
     return str(id(obj))

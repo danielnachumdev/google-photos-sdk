@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-import gp_wrapper
+import gpsdk
 from .parent_classes import Printable, Dictable
 from .enums import PositionType, StatusCode
 Milliseconds = float
@@ -206,7 +206,7 @@ class MediaItemResult(Dictable, Printable):
     """Result of creating a new media item.
 
     Args:
-        mediaItem (Optional[&quot;gp_wrapper.MediaItem&quot;], optional): 
+        mediaItem (Optional[&quot;gpsdk.MediaItem&quot;], optional): 
             Media item created with the upload token. 
             It's populated if no errors occurred and the media item was created successfully. 
             Defaults to None.
@@ -222,7 +222,7 @@ class MediaItemResult(Dictable, Printable):
     @staticmethod
     def from_dict(dct: dict):
         return MediaItemResult(
-            mediaItem=gp_wrapper.MediaItem.from_dict(
+            mediaItem=gpsdk.MediaItem.from_dict(
                 gp=dct["gp"],
                 dct=dct["mediaItem"]
             ) if "mediaItem" in dct else None,
@@ -230,7 +230,7 @@ class MediaItemResult(Dictable, Printable):
             uploadToken=dct["uploadToken"] if "uploadToken" in dct else None,
         )
 
-    def __init__(self, mediaItem: Optional["gp_wrapper.MediaItem"] = None, status: Optional[Status] = None,
+    def __init__(self, mediaItem: Optional["gpsdk.MediaItem"] = None, status: Optional[Status] = None,
                  uploadToken: Optional[str] = None) -> None:  # type:ignore
 
         self.__uploadToken = uploadToken

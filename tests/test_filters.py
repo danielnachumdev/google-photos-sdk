@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from gp_wrapper.objects.core.media_item.filters import (
+from gpsdk.objects.core.media_item.filters import (
     ContentCategory,
     ContentFilter,
     Date,

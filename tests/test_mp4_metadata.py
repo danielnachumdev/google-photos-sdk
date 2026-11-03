@@ -8,7 +8,7 @@ from pathlib import Path
 import imageio_ffmpeg
 import pytest
 
-from gp_wrapper.utils.mp4_metadata import embed_mp4_creation_time
+from gpsdk.utils.mp4_metadata import embed_mp4_creation_time
 
 
 def _write_tiny_mp4(path: Path) -> None:

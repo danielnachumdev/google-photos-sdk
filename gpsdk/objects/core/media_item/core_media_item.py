@@ -226,7 +226,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
         """Returns the media item for the specified media item identifier.
 
         Args:
-            gp (gp_wrapper.gp.GooglePhotos): Google Photos object
+            gp (gpsdk.gp.GooglePhotos): Google Photos object
             mediaItemId (str): the id of the wanted item
 
         Raises:
@@ -256,7 +256,7 @@ class CoreMediaItem(Printable, OnlyPrivate):
         If you set both the album and the filters, the request results in an error.
 
         Args:
-            gp (gp_wrapper.objects.core.gp.CoreGooglePhotos): _description_
+            gp (gpsdk.objects.core.gp.CoreGooglePhotos): _description_
             albumId (Optional[str], optional): Identifier of an album. 
                 If populated, lists all media items in specified album. 
                 Can't set in conjunction with any filters. Defaults to None.

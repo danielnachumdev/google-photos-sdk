@@ -1,7 +1,7 @@
 """Tests for CoreEnrichmentItem."""
 from __future__ import annotations
 
-from gp_wrapper.objects.core.enrichment_item import CoreEnrichmentItem
+from gpsdk.objects.core.enrichment_item import CoreEnrichmentItem
 
 
 def test_enrichment_item_id_and_str() -> None:

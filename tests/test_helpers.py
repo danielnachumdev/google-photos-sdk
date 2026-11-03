@@ -1,9 +1,9 @@
-"""Tests for gp_wrapper.utils.helpers."""
+"""Tests for gpsdk.utils.helpers."""
 from __future__ import annotations
 
 import pytest
 
-from gp_wrapper.utils.helpers import (
+from gpsdk.utils.helpers import (
     batchify,
     get_python_version,
     json_default,
@@ -11,7 +11,7 @@ from gp_wrapper.utils.helpers import (
     slowdown,
     split_iterable,
 )
-from gp_wrapper.utils.structures.data_types import SimpleMediaItem
+from gpsdk.utils.structures.data_types import SimpleMediaItem
 
 
 def test_get_python_version_matches_platform() -> None:
@@ -53,7 +53,7 @@ def test_json_default_dunder_json() -> None:
     assert json_default(HasJson()) == {"ok": True}
 
 
-def test_json_default_gp_wrapper_object() -> None:
+def test_json_default_gpsdk_object() -> None:
     item = SimpleMediaItem("tok", "a.jpg")
     dumped = json_default(item)
     assert isinstance(dumped, str)
@@ -79,9 +79,9 @@ def test_slowdown_rejects_non_numeric() -> None:
 
 def test_slowdown_spaces_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     sleeps: list[float] = []
-    monkeypatch.setattr("gp_wrapper.utils.helpers.time.sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr("gpsdk.utils.helpers.time.sleep", lambda s: sleeps.append(s))
     times = iter([100.0, 100.1, 100.2])
-    monkeypatch.setattr("gp_wrapper.utils.helpers.time.time", lambda: next(times))
+    monkeypatch.setattr("gpsdk.utils.helpers.time.time", lambda: next(times))
 
     @slowdown(2)
     def ping(x):

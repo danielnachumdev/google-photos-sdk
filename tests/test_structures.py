@@ -8,7 +8,7 @@ from types import FrameType
 
 import pytest
 
-from gp_wrapper.utils.structures.data_types import (
+from gpsdk.utils.structures.data_types import (
     ALBUMS_ENDPOINT,
     DEFAULT_NUM_WORKERS,
     EMPTY_PROMPT_MESSAGE,
@@ -23,7 +23,7 @@ from gp_wrapper.utils.structures.data_types import (
     SimpleMediaItem,
     Status,
 )
-from gp_wrapper.utils.structures.enums import (
+from gpsdk.utils.structures.enums import (
     AlbumMaskType,
     EnrichmentType,
     HeaderType,
@@ -34,7 +34,7 @@ from gp_wrapper.utils.structures.enums import (
     RequestType,
     StatusCode,
 )
-from gp_wrapper.utils.structures.parent_classes import (
+from gpsdk.utils.structures.parent_classes import (
     Dictable,
     IdEquality,
     IndentedWriter2,

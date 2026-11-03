@@ -1,10 +1,10 @@
-"""Tests for gp_wrapper.utils.pbar."""
+"""Tests for gpsdk.utils.pbar."""
 from __future__ import annotations
 
 import pytest
 from tqdm import tqdm
 
-from gp_wrapper.utils.pbar import DEFAULT_BAR_FORMAT, ProgressBar, ProgressBarInjector
+from gpsdk.utils.pbar import DEFAULT_BAR_FORMAT, ProgressBar, ProgressBarInjector
 
 from .conftest import DummyProgressBar
 

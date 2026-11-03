@@ -3,8 +3,8 @@
 Python client for the Google Photos Library API (albums, media, upload, search).
 
 **PyPI:** [`google-photos-sdk`](https://pypi.org/project/google-photos-sdk/)  
-**Import:** still `gp_wrapper` (package directory unchanged).  
-Older releases were published as [`gp_wrapper`](https://pypi.org/project/gp_wrapper/).
+**Import:** `gpsdk` (formerly `gp_wrapper`).  
+Older releases were also published as [`gp_wrapper`](https://pypi.org/project/gp_wrapper/).
 
 Requires **Python 3.11+**.
 
@@ -19,13 +19,13 @@ pip install -e .
 ## Usage
 
 ```python
-from gp_wrapper import GooglePhotos
+from gpsdk import GooglePhotos
 
 gp = GooglePhotos()  # OAuth as configured for the package
 albums = gp.get_albums()
 ```
 
-Main types: `GooglePhotos`, `Album`, `MediaItem`. See `gp_wrapper/` for the API surface.
+Main types: `GooglePhotos`, `Album`, `MediaItem`. See `gpsdk/` for the API surface.
 
 ## Develop
 

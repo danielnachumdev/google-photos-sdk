@@ -27,7 +27,7 @@ class CoreAlbum(Printable, OnlyPrivate):
         """creates a GooglePhotosAlbum object from a dict from a response object
 
         Args:
-            gp (gp_wrapper.gp.GooglePhotos): the GooglePhotos object
+            gp (gpsdk.gp.GooglePhotos): the GooglePhotos object
             dct (dict): the dict object containing the data
 
         Returns:

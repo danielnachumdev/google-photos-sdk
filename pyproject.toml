@@ -25,7 +25,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 # Runtime deps. Install with: uv sync
-# moviepy 2.x removed moviepy.editor, which gp_wrapper still imports.
+# moviepy 2.x removed moviepy.editor, which gpsdk still imports.
 dependencies = [
     "google-api-python-client",
     "google-auth-httplib2",
@@ -59,11 +59,11 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["gp_wrapper*"]
+include = ["gpsdk*"]
 exclude = ["tests*", "archive*"]
 
 [tool.setuptools.package-data]
-"gp_wrapper" = ["py.typed"]
+"gpsdk" = ["py.typed"]
 
 # default-groups = [] so `uv sync` is runtime-only.
 [tool.uv]
@@ -84,10 +84,10 @@ constraint-dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "--cov=gp_wrapper --cov-report=term-missing --cov-fail-under=95"
+addopts = "--cov=gpsdk --cov-report=term-missing --cov-fail-under=95"
 
 [tool.coverage.run]
-source = ["gp_wrapper"]
+source = ["gpsdk"]
 omit = [
     "tmp.py",
     "*/tests/*",
@@ -105,7 +105,7 @@ no_implicit_optional = true
 strict_optional = true
 namespace_packages = true
 explicit_package_bases = true
-files = ["gp_wrapper"]
+files = ["gpsdk"]
 ignore_missing_imports = true
 
 [tool.pylint.main]
