@@ -74,14 +74,12 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 ## PRs, CI, and releases
 
 1. Branch off `main`; open a PR into `main`.
-2. Attach **exactly one** release label: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`.
-3. **CI** — thin `.github/workflows/ci.yml` calls `…/ci.yml@v1` (detect + Py 3.11–3.13). Prefer required check **`CI / CI`**.
-4. **CD** — thin `.github/workflows/cd.yml` calls `…/label.yml@v1` (PR bump-label gate) + `…/semver.yml@v1` (bump → wheel → GitHub Release). After CI succeeds on `main`:
-   - bump → stamp version, `uv build` wheel, GitHub Release + `.whl`
-   - `noBump` → succeed without a Release
-5. Version **source of truth** is GitHub Release tags (not bot-committed bumps). If no Release exists yet, CD seeds from `pyproject.toml`.
-6. Dependabot PRs should stay on `noBump` (configured in `.github/dependabot.yml`).
-7. Change shared release/CI behavior in **`danielnachumdev/actions`**, not by re-vendoring scripts here.
+2. Attach **exactly one** semver label: `noBump` | `bumpPatch` | `bumpMinor` | `bumpMajor`.
+3. **CI** — `…/ci.yml@v1` (tests) + `…/semver-ci.yml@v1` (validate label). Prefer **`CI / CI`** and **`Semver / Semver`**.
+4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release (or skip on `noBump`).
+5. Version **source of truth** is GitHub Release tags. If none yet, CD seeds from `pyproject.toml`.
+6. Dependabot PRs stay on `noBump`.
+7. Change shared CI/semver behavior in **`danielnachumdev/actions`**, not by re-vendoring here.
 
 Optional local PyPI publish (not the default ship path):
 
@@ -95,7 +93,7 @@ Needs `.pypirc`. License path is `./LISENCE`.
 ### Repo gates (already configured)
 
 - `.github/CODEOWNERS` — `@danielnachumdev`
-- Branch protection / ruleset: required **`CI / CI`** + **`Label / Label`**; code-owner reviews; no force-push to `main`
+- Branch protection / ruleset: required **`CI / CI`** + **`Semver / Semver`**; code-owner reviews; no force-push to `main`
 - Private vulnerability reporting via GitHub Security Advisories
 
 ---
