@@ -7,7 +7,7 @@ import gp_wrapper
 
 
 def test_top_level_reexports() -> None:
-    assert gp_wrapper.__version__ == version("gp_wrapper")
+    assert gp_wrapper.__version__ == version("google-photos-sdk")
     assert gp_wrapper.GooglePhotos is not None
     assert gp_wrapper.Album is not None
     assert gp_wrapper.MediaItem is not None

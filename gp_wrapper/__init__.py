@@ -5,4 +5,4 @@ from .utils.pbar import ProgressBar
 from .objects import *
 
 # Always matches the installed distribution (CD stamps pyproject version into the wheel).
-__version__ = version("gp_wrapper")
+__version__ = version("google-photos-sdk")
