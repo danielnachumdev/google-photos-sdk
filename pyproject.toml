@@ -30,7 +30,7 @@ dependencies = [
     "google-api-python-client",
     "google-auth-httplib2",
     "google-auth-oauthlib",
-    "moviepy>=1.0.3,<2",
+    "moviepy>=1.0.3,<3",
     "requests>=2.33.0",
     "tqdm",
 ]
@@ -70,7 +70,7 @@ exclude = ["tests*", "archive*"]
 default-groups = []
 # Security floors for Dependabot findings (transitive + direct).
 constraint-dependencies = [
-    "moviepy>=1.0.3,<2",
+    "moviepy>=1.0.3,<3",
     "certifi>=2026.10.18",
     "cryptography>=50.0.0",
     "oauthlib>=4.0.0",
