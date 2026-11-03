@@ -76,20 +76,21 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 1. Branch off `main`; open a PR into `main`.
 2. Attach **exactly one** semver label: `noBump` | `bumpPatch` | `bumpMinor` | `bumpMajor`.
 3. **CI** — `…/ci.yml@v1` (tests) + `…/semver-ci.yml@v1` (validate label). Prefer **`CI / CI`** and **`Semver / Semver`**.
-4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release → floating `vMAJOR` (or skip on `noBump`).
+4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release → floating `vMAJOR` → **PyPI** (`publish-pypi: true`), or skip on `noBump`.
 5. Version **source of truth** is GitHub Release tags. If none yet, CD seeds from `pyproject.toml`.
 6. Dependabot PRs stay on `noBump`.
 7. Change shared CI/semver behavior in **`danielnachumdev/actions`**, not by re-vendoring here.
 
-Optional local PyPI publish (not the default ship path):
+**PyPI (CD):** Trusted Publishing (OIDC) preferred — configure a PyPI trusted publisher for this repo + workflow `cd.yml`. Optional fallback: repo secret `PYPI_API_TOKEN`. Thin CD must grant `id-token: write` and pass `PYPI_API_TOKEN` by name.
+
+Optional local QA / emergency publish (`publish.py`, needs `.pypirc`):
 
 ```bash
-# bump VERSION in publish.py if needed; demo=True → QA only
+# bump VERSION if needed; demo=True → QA only
 uv run --all-groups python publish.py
 ```
 
-Needs `.pypirc`. License path is `./LISENCE`.
-
+License path is `./LISENCE`.
 ### Repo gates (already configured)
 
 - `.github/CODEOWNERS` — `@danielnachumdev`

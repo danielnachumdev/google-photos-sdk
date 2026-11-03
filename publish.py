@@ -1,7 +1,8 @@
-"""Publish gp_wrapper via quickpub (QA, uv build, PyPI + git).
+"""Local QA / emergency publish via quickpub (not the default ship path).
 
-Bump `VERSION` before a real release. Set `demo=True` to run checks only.
-Requires `.pypirc`. License file on disk is `LISENCE`.
+Prefer CD: ``.github/workflows/cd.yml`` → ``semver-cd@v1`` with ``publish-pypi: true``.
+Bump `VERSION` only for local runs. Set `demo=True` to run checks only.
+Requires `.pypirc` for uploads. License file on disk is `LISENCE`.
 """
 
 from tqdm import tqdm
