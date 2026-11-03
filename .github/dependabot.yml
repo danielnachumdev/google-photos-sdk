@@ -1,4 +1,3 @@
-# Keep runtime/dev deps and Actions pins current; Dependabot opens grouped PRs.
 version: 2
 updates:
   - package-ecosystem: "pip"
