@@ -17,9 +17,8 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 
 ```text
 .
-├── .github/             # CODEOWNERS, dependabot.yml, workflows/
+├── .github/             # CODEOWNERS, dependabot.yml, thin CI/CD orchestrators
 ├── gp_wrapper/          # Importable package
-├── scripts/release/     # CD: release_semver.py + build_release_wheel.sh
 ├── tests/
 ├── pyproject.toml
 ├── uv.lock
@@ -28,6 +27,8 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 ├── LISENCE              # MIT (filename spelling is historical)
 └── READMES/             # Examples + client_secrets shape
 ```
+
+Shared CI/CD implementation: [`danielnachumdev/actions`](https://github.com/danielnachumdev/actions) (`@v1`). Playbook: [`PLAYBOOK.md`](https://github.com/danielnachumdev/actions/blob/v1/PLAYBOOK.md).
 
 ---
 
@@ -74,12 +75,13 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 
 1. Branch off `main`; open a PR into `main`.
 2. Attach **exactly one** release label: `bumpMajor` | `bumpMinor` | `bumpPatch` | `noBump`.
-3. **CI** (`.github/workflows/ci.yml`): pytest on Python 3.11–3.13; aggregate check name **`CI`**.
-4. After CI succeeds on a push to `main`, **CD** (`.github/workflows/cd.yml`) reads the merged PR’s label:
-   - bump → stamp version, `uv build` wheel, create GitHub Release + attach `.whl`
+3. **CI** — thin `.github/workflows/ci.yml` calls `reusable-python-uv-ci.yml@v1` (Py 3.11–3.13). Aggregate check name **`CI`**.
+4. **CD** — thin `.github/workflows/cd.yml` calls `reusable-release-label.yml@v1` + `reusable-semver-github-release.yml@v1`. After CI succeeds on `main`:
+   - bump → stamp version, `uv build` wheel, GitHub Release + `.whl`
    - `noBump` → succeed without a Release
 5. Version **source of truth** is GitHub Release tags (not bot-committed bumps). If no Release exists yet, CD seeds from `pyproject.toml`.
 6. Dependabot PRs should stay on `noBump` (configured in `.github/dependabot.yml`).
+7. Change shared release/CI behavior in **`danielnachumdev/actions`**, not by re-vendoring scripts here.
 
 Optional local PyPI publish (not the default ship path):
 
@@ -93,8 +95,8 @@ Needs `.pypirc`. License path is `./LISENCE`.
 ### Repo gates (already configured)
 
 - `.github/CODEOWNERS` — `@danielnachumdev`
-- Branch protection / ruleset: required **`CI`** + **`Release label`**; code-owner reviews; no force-push to `main`
-- Private vulnerability reporting via GitHub Security Advisories (no separate `SECURITY.md`)
+- Branch protection / ruleset: required **`CI`** + **`Release label / Release label`** (reusable-workflow nested name); code-owner reviews; no force-push to `main`
+- Private vulnerability reporting via GitHub Security Advisories
 
 ---
 
