@@ -1,11 +1,13 @@
 """Public re-exports from gp_wrapper.__init__."""
 from __future__ import annotations
 
+from importlib.metadata import version
+
 import gp_wrapper
 
 
 def test_top_level_reexports() -> None:
-    assert gp_wrapper.__version__ == "0.9.12"
+    assert gp_wrapper.__version__ == version("gp_wrapper")
     assert gp_wrapper.GooglePhotos is not None
     assert gp_wrapper.Album is not None
     assert gp_wrapper.MediaItem is not None

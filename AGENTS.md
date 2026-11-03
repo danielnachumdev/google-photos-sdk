@@ -22,7 +22,6 @@ Implementation guide for coding agents changing **gp_wrapper**. Product pitch an
 ├── tests/
 ├── pyproject.toml
 ├── uv.lock
-├── publish.py           # Optional local quickpub → PyPI; CD owns GitHub Releases
 ├── README.md            # Marketing / user docs
 ├── LISENCE              # MIT (filename spelling is historical)
 └── READMES/             # Examples + client_secrets shape
@@ -36,7 +35,7 @@ Shared CI/CD: [`danielnachumdev/actions`](https://github.com/danielnachumdev/act
 
 ```bash
 uv sync                 # runtime only → .venv
-uv sync --group dev     # + mypy, pylint, pytest, quickpub, stubs
+uv sync --group dev     # + mypy, pylint, pytest, stubs
 # or: uv sync --all-groups
 ```
 
@@ -54,7 +53,7 @@ Config for mypy / pylint / pytest / coverage lives in `pyproject.toml`.
 ### Dependencies
 
 - **Runtime:** `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`, `requests`, `tqdm`, `moviepy>=1.0.3,<2`
-- **Dev group:** mypy, pylint, pytest, pytest-cov, pytest-xdist, `quickpub>=4.1.3`, `types-requests`, `types-tqdm`
+- **Dev group:** mypy, pylint, pytest, pytest-cov, pytest-xdist, `types-requests`, `types-tqdm`
 - **Constraint:** keep `moviepy>=1.0.3,<2` (`moviepy.editor` was removed in 2.x — do not rewrite the moviepy API here)
 - Security floors for Dependabot-fixed transitive deps are in `[tool.uv] constraint-dependencies`
 
@@ -65,7 +64,7 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 ## Code style & domain notes
 
 - Follow the writing-python skill when adding/refactoring modules (class-first, SRP files, no stub shims).
-- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). Keep `__version__` aligned with packaging when stamping releases (CD does this in the ephemeral wheel build).
+- Public surface is re-exported from `gp_wrapper/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("gp_wrapper")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel).
 - **File timestamps:** use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`; portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created).
 - **`CoreMediaItem.upload_media`:** copies FileTimes onto transcoded non-mp4 videos after reading bytes; embeds MP4 `creation_time` from source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) before upload bytes are read (Google Photos dates videos from container metadata). Transcode runs whether or not `pbar` is passed.
 
@@ -76,19 +75,12 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 1. Branch off `main`; open a PR into `main`.
 2. Attach **exactly one** semver label: `noBump` | `bumpPatch` | `bumpMinor` | `bumpMajor`.
 3. **CI** — `…/ci.yml@v1` (tests) + `…/semver-ci.yml@v1` (validate label). Prefer **`CI / CI`** and **`Semver / Semver`**.
-4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release → floating `vMAJOR` (or skip on `noBump`).
+4. **CD** — `…/semver-cd.yml@v1` after CI succeeds on `main`: bump → wheel → GitHub Release → floating `vMAJOR` → **PyPI** (`publish-pypi: true`), or skip on `noBump`.
 5. Version **source of truth** is GitHub Release tags. If none yet, CD seeds from `pyproject.toml`.
 6. Dependabot PRs stay on `noBump`.
 7. Change shared CI/semver behavior in **`danielnachumdev/actions`**, not by re-vendoring here.
 
-Optional local PyPI publish (not the default ship path):
-
-```bash
-# bump VERSION in publish.py if needed; demo=True → QA only
-uv run --all-groups python publish.py
-```
-
-Needs `.pypirc`. License path is `./LISENCE`.
+**PyPI:** shipped only via CD (Trusted Publishing OIDC preferred for repo + workflow `cd.yml`; optional repo secret `PYPI_API_TOKEN`). Thin CD must grant `id-token: write` and pass `PYPI_API_TOKEN` by name. There is no local `publish.py` / quickpub path.
 
 ### Repo gates (already configured)
 

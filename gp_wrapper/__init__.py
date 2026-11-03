@@ -1,5 +1,8 @@
+from importlib.metadata import version
+
 from .utils.structures import *
 from .utils.pbar import ProgressBar
 from .objects import *
 
-__version__ = "0.9.12"
+# Always matches the installed distribution (CD stamps pyproject version into the wheel).
+__version__ = version("gp_wrapper")
