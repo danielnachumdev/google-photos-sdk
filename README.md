@@ -2,14 +2,16 @@
 
 Python client for the Google Photos Library API (albums, media, upload, search).
 
-Published on PyPI as [`gp_wrapper`](https://pypi.org/project/gp_wrapper/) (package name unchanged).
+**PyPI:** [`google-photos-sdk`](https://pypi.org/project/google-photos-sdk/)  
+**Import:** still `gp_wrapper` (package directory unchanged).  
+Older releases were published as [`gp_wrapper`](https://pypi.org/project/gp_wrapper/).
 
 Requires **Python 3.11+**.
 
 ## Install
 
 ```bash
-pip install gp_wrapper
+pip install google-photos-sdk
 # or from this repo:
 pip install -e .
 ```
