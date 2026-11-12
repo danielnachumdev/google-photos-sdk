@@ -11,6 +11,7 @@ from gpsdk.utils import AlbumId, AlbumPosition, MediaItemResult, NewMediaItem, N
 from .core import GooglePhotos, CoreMediaItem, MEDIA_ITEM_LIST_DEFAULT_PAGE_SIZE,\
     MEDIA_ITEM_LIST_MAXIMUM_PAGE_SIZE, MEDIA_ITEM_BATCH_CREATE_MAXIMUM_IDS
 from ..utils import MediaItemMaskTypes, NewMediaItem, SimpleMediaItem
+from ..utils.structures.enums import RequestType
 
 
 class MediaItem(CoreMediaItem):
@@ -193,6 +194,59 @@ class MediaItem(CoreMediaItem):
         if res.status_code == 200:
             self.description = description
         return res
+
+    def byte_size(self) -> Optional[int]:
+        """Probe byte length via Content-Length on the downloadable ``baseUrl``.
+
+        Library list/search responses do not include file size. This HEADs
+        (then optionally streams a GET) ``baseUrl`` with ``=d`` / ``=dv``.
+
+        Returns:
+            Optional[int]: Content-Length when present; otherwise None.
+        """
+        url = self._download_base_url()
+        if not url:
+            return None
+        head = self.gp.request(RequestType.HEAD, url, allow_redirects=True)
+        size = self._content_length(head)
+        if size is not None:
+            return size
+        if head.status_code >= 400:
+            return None
+        get = self.gp.request(RequestType.GET, url, stream=True, allow_redirects=True)
+        try:
+            return self._content_length(get)
+        finally:
+            get.close()
+
+    def _download_base_url(self) -> Optional[str]:
+        base = (self.baseUrl or "").strip()
+        if not base:
+            return None
+        suffix = "=dv" if self._looks_like_video() else "=d"
+        if base.endswith(suffix) or "=d" in base or "=dv" in base:
+            return base
+        return f"{base}{suffix}"
+
+    def _looks_like_video(self) -> bool:
+        mime = (self.mimeType or "").lower()
+        if mime.startswith("video/"):
+            return True
+        metadata = self.mediaMetadata
+        return bool(getattr(metadata, "video", None))
+
+    @staticmethod
+    def _content_length(response: Response) -> Optional[int]:
+        raw = response.headers.get("Content-Length") or response.headers.get(
+            "content-length"
+        )
+        if raw is None or str(raw).strip() == "":
+            return None
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return None
+        return value if value >= 0 else None
 
 
 __all__ = [

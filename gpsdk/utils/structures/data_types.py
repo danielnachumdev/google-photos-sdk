@@ -379,7 +379,11 @@ SCOPES = [
     'https://www.googleapis.com/auth/photoslibrary',
     "https://www.googleapis.com/auth/photoslibrary.appendonly",
     "https://www.googleapis.com/auth/photoslibrary.sharing",
-    "https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata"
+    "https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata",
+    # Required to list/search app-created albums/media and receive baseUrl
+    # (Library API returns 403 "insufficient scopes" without it, even when
+    # photoslibrary is granted). Needed for MediaItem.byte_size() probes.
+    "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata",
 ]
 EMPTY_PROMPT_MESSAGE = ""
 DEFAULT_NUM_WORKERS: int = 2
