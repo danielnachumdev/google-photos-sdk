@@ -67,6 +67,7 @@ Prefer editing floors in `pyproject.toml` and regenerating with `uv lock` / `uv 
 - Public surface is re-exported from `gpsdk/__init__.py` (`GooglePhotos`, `Album`, `MediaItem`, structures, enums, `ProgressBar`, …). `__version__` is `importlib.metadata.version("google-photos-sdk")` — always the installed distribution version (CD stamps `pyproject.toml` into the release wheel). Distribution name stays `google-photos-sdk`; import package is `gpsdk`.
 - **File timestamps:** use `FileTimeService` (`utils/file_time.py`) — public `get`/`set`; portable `os.stat` / `os.utime`. `set` updates access/modification only (not Windows Date created).
 - **`CoreMediaItem.upload_media`:** copies FileTimes onto transcoded non-mp4 videos after reading bytes; embeds MP4 `creation_time` from source mtime via `embed_mp4_creation_time` (`utils/mp4_metadata.py`) before upload bytes are read (Google Photos dates videos from container metadata). Transcode runs whether or not `pbar` is passed.
+- **`MediaItem.byte_size()`:** Library list/search JSON has no file size field. Probes `Content-Length` via HEAD (then streamed GET) on `baseUrl` with `=d` / `=dv`. Returns `None` when unavailable. **Live-confirmed** with app-created media. Requires scope `photoslibrary.readonly.appcreateddata` in addition to the classic Photos scopes — without it, albums/media list/search/get return 403 even when `photoslibrary` is on the token, and `batchCreate` omits `baseUrl`.
 
 ---
 

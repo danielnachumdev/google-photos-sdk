@@ -5,6 +5,7 @@ class RequestType(Enum):
     """An inner use Enum to specify which types of request can be sent with the API
     """
     GET = "get"
+    HEAD = "head"
     POST = "post"
     PATCH = "patch"
 

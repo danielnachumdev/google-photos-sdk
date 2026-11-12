@@ -59,6 +59,7 @@ class GooglePhotos(Printable, OnlyPrivate):
 
         request_map: dict[RequestType, Callable[..., Response]] = {
             RequestType.GET: self.session.get,
+            RequestType.HEAD: self.session.head,
             RequestType.POST: self.session.post,
             RequestType.PATCH: self.session.patch,
         }

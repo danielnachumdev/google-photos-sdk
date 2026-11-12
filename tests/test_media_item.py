@@ -583,3 +583,57 @@ def test_set_description(gp) -> None:
     gp.session.patch.return_value.raise_for_status.return_value = None
     mi.set_description("ignored")
     assert mi.description == "updated"
+
+
+def test_byte_size_from_head_content_length(gp) -> None:
+    mi = MediaItem.from_dict(gp, MEDIA_ITEM_DICT)
+    head = make_response({}, status_code=200)
+    head.headers = {"Content-Length": "12345"}
+    gp.session.head.return_value = head
+    assert mi.byte_size() == 12345
+    gp.session.head.assert_called_once()
+    called_url = gp.session.head.call_args.kwargs.get("url") or gp.session.head.call_args.args[0]
+    assert called_url.endswith("=d")
+    gp.session.get.assert_not_called()
+
+
+def test_byte_size_falls_back_to_get_when_head_omits_length(gp) -> None:
+    mi = MediaItem.from_dict(gp, MEDIA_ITEM_DICT)
+    head = make_response({}, status_code=200)
+    head.headers = {}
+    get = make_response({}, status_code=200)
+    get.headers = {"content-length": "99"}
+    gp.session.head.return_value = head
+    gp.session.get.return_value = get
+    assert mi.byte_size() == 99
+    get.close.assert_called_once()
+
+
+def test_byte_size_video_uses_dv_suffix(gp) -> None:
+    video = {
+        **MEDIA_ITEM_DICT,
+        "mimeType": "video/mp4",
+        "mediaMetadata": {
+            **MEDIA_ITEM_DICT["mediaMetadata"],
+            "video": {"fps": 30},
+        },
+    }
+    mi = MediaItem.from_dict(gp, video)
+    head = make_response({}, status_code=200)
+    head.headers = {"Content-Length": "7"}
+    gp.session.head.return_value = head
+    assert mi.byte_size() == 7
+    called_url = gp.session.head.call_args.kwargs.get("url") or gp.session.head.call_args.args[0]
+    assert called_url.endswith("=dv")
+
+
+def test_byte_size_missing_base_url_or_length_returns_none(gp) -> None:
+    mi = MediaItem.from_dict(gp, MEDIA_ITEM_DICT_MINIMAL)
+    assert mi.byte_size() is None
+
+    mi = MediaItem.from_dict(gp, MEDIA_ITEM_DICT)
+    head = make_response({}, status_code=404)
+    head.headers = {}
+    gp.session.head.return_value = head
+    assert mi.byte_size() is None
+    gp.session.get.assert_not_called()
